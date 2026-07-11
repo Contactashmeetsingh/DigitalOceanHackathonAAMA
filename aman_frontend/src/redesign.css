@@ -570,7 +570,7 @@ body {
 .filter-group { display: flex; flex-wrap: wrap; gap: 6px; }
 .filter-chip,
 .quiet-button { min-height: 36px; padding: 7px 11px; color: #8e8d98; background: #0b0c12; border: 1px solid var(--line); border-radius: 999px; font-size: .65rem; cursor: pointer; }
-.filter-chip { display: inline-flex; align-items: center; gap: 6px; }
+.filter-chip { display: inline-flex; align-items: center; gap: 6px; color: #ffffff; }
 .filter-chip:hover,
 .filter-chip.active,
 .quiet-button:hover { color: var(--ink); background: #12131b; border-color: var(--line-strong); }
@@ -633,7 +633,7 @@ body {
 .data-fallback th,
 .data-fallback td { padding: 10px 15px; border-top: 1px solid var(--line); text-align: left; }
 .data-fallback th { color: #c6c5cc; font-weight: 620; }
-.data-fallback td { color: #7f7e89; }
+.data-fallback td { color: #ffffff; }
 .data-fallback th button { padding: 0; color: #c6c5cc; background: transparent; border: 0; text-decoration: underline; text-decoration-color: #54535e; text-underline-offset: 3px; cursor: pointer; }
 
 .globe-surface { background: radial-gradient(circle at 25% 48%, rgb(89 124 255 / 8%), transparent 34rem), #07080d; }
