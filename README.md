@@ -11,6 +11,15 @@ on the **DigitalOcean Gradient AI Platform**.
 
 ## Iteration log
 
+- **2026-07-11 — Research bridge curation (started):** Verify current official
+  participation/status pages for genomics programs serving underrepresented
+  populations, expand the dated study records with consent/privacy context, and
+  implement broad-label matching with a non-empty default fallback.
+- **2026-07-11 — Research bridge curation (completed):** Curated six dated
+  programs with participation, consent/privacy, official status sources, and an
+  explicit distinction between public enrollment and consortium/data pathways.
+  Added broad-label aliases, enrollment-first matching, and a two-program default;
+  confirmed with `9 passed` across study and parser tests.
 - **2026-07-11 — Knowledge Base corpus (started):** Verify the requested
   population-genetics sources, add balanced South Asian, West African, East
   Asian, and Indigenous American coverage, and replace the KB script stub with

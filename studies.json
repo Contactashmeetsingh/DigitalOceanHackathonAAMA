@@ -1,33 +1,91 @@
 {
-  "disclaimer": "Illustrative list, curated as of 2026-07-10. Recruiting status changes frequently — verify on each study's official site before acting.",
+  "curated_as_of": "2026-07-11",
+  "disclaimer": "Recruiting status and eligibility change. These links are a dated research bridge, not an endorsement; verify the official page, read the current consent form, and ask questions before sharing DNA or health information.",
+  "default_study_ids": ["all-of-us", "our-future-health"],
   "studies": [
     {
+      "id": "all-of-us",
       "name": "All of Us Research Program",
       "consortium": "US National Institutes of Health",
-      "focus": "Building a diverse US health database; actively prioritizes historically underrepresented communities.",
-      "populations": ["all", "underrepresented US communities"],
-      "url": "https://allofus.nih.gov/"
+      "population_focus": "A US-wide cohort intentionally seeking communities historically left out of health research, including racial and ethnic minorities, rural communities, people with disabilities, and LGBTQIA+ communities.",
+      "populations": ["all", "african", "east asian", "south asian", "indigenous american", "hispanic latino", "middle eastern", "mixed"],
+      "recruitment_status": "Public enrollment open; verify current US eligibility on the official join page.",
+      "direct_enrollment": true,
+      "participation": "Online consent and surveys; participants may choose to share electronic health records, physical measurements, biosamples for DNA analysis, and wearable data.",
+      "consent_privacy": "Consent is modular. Direct identifiers are withheld from researcher datasets, access is tiered and monitored, and a US Certificate of Confidentiality adds protection; genomic data still carries re-identification risk.",
+      "url": "https://www.joinallofus.org/",
+      "status_source": "https://allofus.nih.gov/protecting-data-and-privacy/research-projects-all-us-data",
+      "status_checked": "2026-07-11"
     },
     {
+      "id": "genes-and-health",
+      "name": "Genes & Health",
+      "consortium": "Queen Mary University of London and partner NHS organisations",
+      "population_focus": "British Bangladeshi and British Pakistani communities, which remain underrepresented in genomic datasets.",
+      "populations": ["south asian"],
+      "recruitment_status": "Recruiting eligible volunteers across England.",
+      "direct_enrollment": true,
+      "participation": "People aged 16 or older who identify as Bangladeshi, British-Bangladeshi, Pakistani, or British-Pakistani provide consent, a saliva DNA sample, and permission to link NHS records; optional recall studies require further agreement.",
+      "consent_privacy": "Volunteers sign the consent themselves. Coded genetic and NHS-record data are linked for approved research, and any later recall study has a separate information and consent step.",
+      "url": "https://www.genesandhealth.org/volunteer/",
+      "status_source": "https://www.genesandhealth.org/volunteer/faq/",
+      "status_checked": "2026-07-11"
+    },
+    {
+      "id": "our-future-health",
+      "name": "Our Future Health",
+      "consortium": "Our Future Health, a UK-registered charity",
+      "population_focus": "A large UK cohort designed to reflect the full diversity of the UK population.",
+      "populations": ["all", "african", "east asian", "south asian", "indigenous american", "hispanic latino", "middle eastern", "european", "mixed"],
+      "recruitment_status": "Public enrollment open to adults aged 18 or older who live in the UK.",
+      "direct_enrollment": true,
+      "participation": "Digital consent and questionnaires, health-record linkage, and usually a blood sample and physical measurements at an appointment; some pathways use saliva or NHS Blood and Transplant samples.",
+      "consent_privacy": "Participants can review consent in their account. Approved researchers use de-identified data only inside a monitored trusted research environment, and follow-on contact requires permission.",
+      "url": "https://ourfuturehealth.org.uk/get-involved/",
+      "status_source": "https://ourfuturehealth.org.uk/privacy/participant-privacy/",
+      "status_checked": "2026-07-11"
+    },
+    {
+      "id": "h3africa",
       "name": "H3Africa",
       "consortium": "Human Heredity and Health in Africa",
-      "focus": "Genomics research led by African scientists across the continent.",
-      "populations": ["African", "Sub-Saharan African"],
-      "url": "https://h3africa.org/"
+      "population_focus": "African-led genomics, biobanking, ethics, and training across many distinct African populations and research sites.",
+      "populations": ["african"],
+      "recruitment_status": "No central public enrollment pathway; participation is project- and site-specific, so contact a listed local project and verify current status.",
+      "direct_enrollment": false,
+      "participation": "The consortium links 51 projects with different protocols; any sample, survey, or clinical involvement is defined by the local study rather than by H3Africa centrally.",
+      "consent_privacy": "H3Africa publishes informed-consent and ethics guidance, but each local project must explain its own data sharing, sample storage, community engagement, and withdrawal terms.",
+      "url": "https://h3africa.org/index.php/consortium/",
+      "status_source": "https://h3africa.org/index.php/about/faq/",
+      "status_checked": "2026-07-11"
     },
     {
+      "id": "genomeasia-100k",
       "name": "GenomeAsia 100K",
       "consortium": "GenomeAsia 100K Consortium",
-      "focus": "Sequencing to close the Asian representation gap in reference panels.",
-      "populations": ["South Asian", "Southeast Asian", "East Asian"],
-      "url": "https://genomeasia100k.org/"
+      "population_focus": "Reference genomes spanning South, East, North, and Southeast Asian populations.",
+      "populations": ["south asian", "east asian"],
+      "recruitment_status": "No central public volunteer enrollment page; the official pathway is for scientific collaborators and cohort/sample partners.",
+      "direct_enrollment": false,
+      "participation": "Research partners propose a project and may contribute a relevant, appropriately consented cohort and associated data through a participating institution.",
+      "consent_privacy": "Individual-level data access requires a reviewed application and data-access agreement; use must remain within donor consent and de-identification protections.",
+      "url": "https://www.genomeasia100k.org/engage-and-support.html",
+      "status_source": "https://browser.genomeasia100k.org/",
+      "status_checked": "2026-07-11"
     },
     {
+      "id": "page-study",
       "name": "PAGE Study",
       "consortium": "Population Architecture using Genomics and Epidemiology",
-      "focus": "Genetic studies in ancestrally diverse populations.",
-      "populations": ["Hispanic/Latino", "African American", "Asian", "Native Hawaiian"],
-      "url": "https://www.pagestudy.org/"
+      "population_focus": "Genomic and epidemiological analysis across established ancestrally diverse US cohorts and biobanks.",
+      "populations": ["african", "east asian", "indigenous american", "hispanic latino", "mixed"],
+      "recruitment_status": "Active research consortium, but no direct public participant enrollment; PAGE works through existing cohorts and biobanks.",
+      "direct_enrollment": false,
+      "participation": "PAGE harmonizes genomic, phenotype, electronic-health-record, omics, and polygenic-score data contributed through its participating cohorts.",
+      "consent_privacy": "Consent and privacy terms come from the original contributing cohort or biobank; contact PAGE for research questions rather than sending personal DNA data.",
+      "url": "https://www.pagestudy.org/",
+      "status_source": "https://www.pagestudy.org/",
+      "status_checked": "2026-07-11"
     }
   ]
 }
