@@ -14,8 +14,10 @@ from werkzeug.exceptions import RequestEntityTooLarge
 from werkzeug.utils import secure_filename
 
 from backend import gradient_client
+from backend.comparison import build_comparison_graph
 from backend.narrative import CATEGORY_QUESTIONS, build_messages
 from backend.parser import ParseError, parse_23andme
+from backend.population_map import build_population_map
 from backend.report import build_guided_report
 from backend.traits import ALLOWLIST
 from backend.upload_request import InMemoryUploadRequest
@@ -178,6 +180,45 @@ def narrative():
         )
 
     return jsonify({"category": category, **result})
+
+
+@app.route("/api/comparison-cohort", methods=["POST"])
+def comparison_cohort():
+    """3d-force-graph-compatible cohort comparison view.
+
+    Accepts the same already-analyzed, boundary-checked ``report`` JSON as
+    ``/api/narrative`` — never a raw upload. See ``backend.comparison`` for
+    why every non-"you" node is a labeled synthetic profile rather than a
+    real other person's genome.
+    """
+    payload = request.get_json(silent=True) or {}
+    report = payload.get("report")
+    if not isinstance(report, dict):
+        return (
+            jsonify({"error": "A previously analyzed report is required.", "code": "missing_report"}),
+            400,
+        )
+
+    return jsonify(build_comparison_graph(report))
+
+
+@app.route("/api/population-map", methods=["POST"])
+def population_map():
+    """Real, cited reference-population signal for the 3D globe view.
+
+    Accepts the same already-analyzed report as ``/api/narrative``. See
+    ``backend.population_map`` for why the "you" marker only ever reflects a
+    self-supplied broad label, never DNA-based geolocation.
+    """
+    payload = request.get_json(silent=True) or {}
+    report = payload.get("report")
+    if not isinstance(report, dict):
+        return (
+            jsonify({"error": "A previously analyzed report is required.", "code": "missing_report"}),
+            400,
+        )
+
+    return jsonify(build_population_map(report, report.get("population_context")))
 
 
 if __name__ == "__main__":

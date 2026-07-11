@@ -5,6 +5,11 @@ checks remain intentionally open until the separate deployment handoff.
 
 ## Local product
 
+- [ ] YC-inspired four-surface shell renders overview, trait network, 3D globe,
+      and research workspace at desktop and mobile widths.
+- [ ] Trait-network and globe demo data are explicitly labeled synthetic until
+      de-identified aggregate visualization endpoints are connected.
+- [ ] Frontend/backend integration contract is documented and locally checked.
 - [x] Full Python test suite passes.
 - [x] React production build passes.
 - [x] A valid PGP 23andMe export produces the complete guided report.

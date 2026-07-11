@@ -51,6 +51,19 @@ repository.
 
 ## Iteration log
 
+- **2026-07-11 — Four-surface frontend redesign (started):** Rebuild the
+  frontend around the supplied dark YC-backed product reference: a restrained
+  overview shell, an interactive 100+ profile trait-comparison network, a 3D
+  ancestry-context globe, and a Gradient AI research workspace. Preserve the
+  existing upload/report path and safety boundaries, label all placeholder
+  comparison/location data as synthetic demo content, add an explicit
+  frontend/backend contract, and verify desktop/mobile behavior before release.
+  Installed pinned, reproducible frontend dependencies for the supplied official
+  `3d-force-graph` implementation (`1.80.0`) and Three.js (`0.179.1`); npm still
+  reports one moderate and one high advisory, with no unreviewed force-upgrade
+  applied. Added a tested same-origin frontend API client for the existing
+  multipart analysis and six-category narrative contracts, including stable
+  error handling and safe citation-URL filtering.
 - **2026-07-11 — DigitalOcean credential verifier (started):** Validate and
   publish the standalone four-check diagnostic for serverless inference,
   control-plane Knowledge Bases, deployed-agent RAG evidence, and credential
@@ -327,6 +340,10 @@ npm run build                  # -> frontend/dist, served by Flask at /
 
 ### Local product — complete
 
+- [ ] Four-surface frontend redesign is implemented and visually verified at
+      desktop and mobile widths.
+- [ ] Frontend/backend integration contract documents current endpoints and
+      clearly separates live behavior from planned aggregate visualization data.
 - Strict 23andMe text validation with exact call/no-call, malformed, duplicate,
   chromosome, reference-build, and coverage accounting; the API reports that
   conflicting-duplicate checks are scoped to retained allowlist markers.
