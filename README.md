@@ -87,7 +87,10 @@ ingested; the source-linked crawler-safe dossier is the supported retrieval path
   fallback; hardware-accelerated Chrome rendered the real Globe.gl scene and
   confirmed that selecting a reference updates the inspector and animates the
   camera. The Globe.gl engine remains lazy-loaded outside the initial bundle.
-  DigitalOcean activation and live smoke verification remain.
+  A clean production Docker build also passes with a 2.12 MB build context; the
+  supplied `globe.gl/` reference clone is excluded from that context because the
+  app uses the pinned npm package. DigitalOcean activation and live smoke
+  verification remain.
 
 - **2026-07-11 — Single-frontend Google-color release (completed locally):**
   Removed the redundant generated `frontend/` tree so `aman_frontend/` is the
