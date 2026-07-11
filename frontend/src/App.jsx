@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
+import { TOPMED_PANEL } from "./referencePanelData.js";
+
 const ANSWER_CATEGORIES = [
   {
     id: "interpretation",
@@ -230,12 +232,102 @@ export default function App() {
         </section>
       )}
 
+      <ReferencePanelChart />
+
       <QuestionGuide
         analysisReady={hasAnalysis}
         selected={selectedCategory}
         onSelect={setSelectedCategory}
       />
     </main>
+  );
+}
+
+function ReferencePanelChart() {
+  const [comparisonId, setComparisonId] = useState("pakistani");
+  const maximum = Math.max(...TOPMED_PANEL.groups.map((group) => group.count));
+  const comparison = TOPMED_PANEL.groups.find((group) => group.id === comparisonId);
+  const formatCount = new Intl.NumberFormat("en-US");
+  const formatPercent = new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+  return (
+    <section className="card" aria-labelledby="panel-chart-heading">
+      <p className="step-label">Why specificity changes</p>
+      <h2 id="panel-chart-heading">One reference panel, unequal representation</h2>
+      <p className="section-intro">
+        These are published sample counts from the same {TOPMED_PANEL.name} denominator of{" "}
+        <strong>{formatCount.format(TOPMED_PANEL.total)}</strong>. They show who was available for
+        comparison—not anyone's ancestry percentage.
+      </p>
+
+      <div className="chart-control">
+        <label htmlFor="comparison-group">Highlight the closest available published label</label>
+        <select
+          id="comparison-group"
+          value={comparisonId}
+          onChange={(event) => setComparisonId(event.target.value)}
+        >
+          {TOPMED_PANEL.groups
+            .filter((group) => group.id !== "european")
+            .map((group) => (
+              <option value={group.id} key={group.id}>
+                {group.label}
+              </option>
+            ))}
+        </select>
+      </div>
+
+      <figure className="bar-chart" aria-describedby="chart-caveat">
+        <figcaption className="visually-hidden">
+          Linear bar chart comparing published TOPMed r2 reference sample counts by population label.
+        </figcaption>
+        <ul className="bar-list">
+          {TOPMED_PANEL.groups.map((group) => {
+            const percent = (group.count / TOPMED_PANEL.total) * 100;
+            const isHighlighted = group.id === comparisonId || group.id === "european";
+            return (
+              <li className={isHighlighted ? "bar-row highlighted" : "bar-row"} key={group.id}>
+                <div className="bar-heading">
+                  <span>{group.label}</span>
+                  <span>
+                    {formatCount.format(group.count)} <small>({formatPercent.format(percent)}%)</small>
+                  </span>
+                </div>
+                <div className="bar-track" aria-hidden="true">
+                  <span
+                    className="bar-fill"
+                    style={{ width: `${(group.count / maximum) * 100}%` }}
+                  />
+                </div>
+                <a href={group.source} target="_blank" rel="noreferrer">
+                  Source: {group.sourceLabel}
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      </figure>
+
+      <div className="chart-caveat" id="chart-caveat">
+        <strong>Read this carefully:</strong> labels come from the cited studies and compress diverse
+        communities. {comparison?.caveat || "A broad label is not a single homogeneous population."}{" "}
+        Choosing a highlight does not classify your DNA.
+      </div>
+
+      <aside className="context-stat" aria-label="Historical GWAS context">
+        <span>{TOPMED_PANEL.context.value}</span>
+        <div>
+          <p>{TOPMED_PANEL.context.label}</p>
+          <small>{TOPMED_PANEL.context.caveat}</small>
+          <a href={TOPMED_PANEL.context.source} target="_blank" rel="noreferrer">
+            Source: {TOPMED_PANEL.context.sourceLabel}
+          </a>
+        </div>
+      </aside>
+    </section>
   );
 }
 

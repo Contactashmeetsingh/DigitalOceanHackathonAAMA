@@ -11,6 +11,16 @@ on the **DigitalOcean Gradient AI Platform**.
 
 ## Iteration log
 
+- **2026-07-11 — Reference-panel visualization (started):** Verify a single
+  comparable population-composition dataset, add a lightweight accessible chart
+  that makes representation imbalance legible, label denominators and source
+  dates, and keep historical GWAS metrics separate from reference-sample bars.
+- **2026-07-11 — Reference-panel visualization (completed):** Added an
+  accessible, dependency-free TOPMed r2 sample-count chart with a shared 97,256
+  denominator, selectable comparison highlight, per-bar primary citations, and
+  explicit label/coverage caveats. Kept the historical 96%-of-GWAS metric in a
+  separately sourced context card. Confirmed with a Vite production build and
+  all five parser tests.
 - **2026-07-11 — Frontend states and accessibility (started):** Preserve the
   current upload/analyze endpoint flow while adding explicit loading, empty, and
   error feedback; keyboard/focus improvements; readable high-contrast styling;
