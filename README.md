@@ -11,6 +11,19 @@ on the **DigitalOcean Gradient AI Platform**.
 
 ## Iteration log
 
+- **2026-07-11 — Knowledge Base corpus (started):** Verify the requested
+  population-genetics sources, add balanced South Asian, West African, East
+  Asian, and Indigenous American coverage, and replace the KB script stub with
+  a safe DigitalOcean control-plane workflow that checks managed-database wiring
+  before adding sources or requesting re-indexing.
+- **2026-07-11 — Knowledge Base corpus (completed):** Added eight curated web
+  crawlers and two staged PDF sources, documented each source's purpose, and
+  implemented offline listing, read-only wiring checks, idempotent web-source
+  application, and PDF staging. `bash -n`, the manifest listing, and all five
+  parser tests pass. The live read-only check confirmed that
+  `genetics-literacy-kb` is not present for the current token, so create/select
+  the DO-managed KB, upload the staged PDFs, and re-index in the console before
+  expecting these sources in RAG; no external resources were mutated.
 - **2026-07-11 — Trait allowlist expansion (started):** Verify and add only
   well-replicated, non-medical genotype interpretations for lactase persistence,
   earwax type, TAS2R38 bitter tasting, photic sneeze, ACTN3 muscle composition,
