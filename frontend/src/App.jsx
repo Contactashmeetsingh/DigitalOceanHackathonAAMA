@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 
+import { analyzeGenome } from "./api.js";
+import AncestryGlobe from "./components/AncestryGlobe.jsx";
+import ResearchWorkspace from "./components/ResearchWorkspace.jsx";
+import TraitNetwork from "./components/TraitNetwork.jsx";
 import { TOPMED_PANEL } from "./referencePanelData.js";
 import { canReplaceSelectedFile } from "./uploadInteraction.js";
 
@@ -104,7 +108,6 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null); // { data } | { error }
   const [fileError, setFileError] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState(null);
   const inputRef = useRef(null);
   const resultRef = useRef(null);
 
@@ -157,220 +160,220 @@ export default function App() {
     setLoading(true);
     setResult(null);
 
-    const body = new FormData();
-    body.append("file", file);
-    body.append("population_label", populationLabel.trim());
     try {
-      const response = await fetch("/api/analyze", { method: "POST", body });
-      const data = await response.json().catch(() => ({}));
-      setResult(
-        response.ok
-          ? { data, submittedPopulationLabel: populationLabel.trim() }
-          : { error: data.error || `Analysis failed (HTTP ${response.status}). Try again.` },
-      );
-    } catch {
-      setResult({ error: "We could not reach the analysis service. Check your connection and try again." });
+      const data = await analyzeGenome({ file, populationLabel });
+      setResult({ data, submittedPopulationLabel: populationLabel.trim() });
+    } catch (error) {
+      setResult({
+        error: error instanceof Error
+          ? error.message
+          : "We could not reach the analysis service. Check your connection and try again.",
+      });
     } finally {
       setLoading(false);
     }
   }
 
-  const hasAnalysis = Boolean(result?.data);
-
   return (
-    <main className="wrap" id="main-content">
-      <a className="skip-link" href="#analyze">Skip to raw-data analysis</a>
-      <header className="site-header">
-        <div className="topbar">
-          <a className="brand-lockup" href="#main-content" aria-label="Ancestry Audit Layer home">
-            <span className="brand-mark" aria-hidden="true"><span /><span /><span /></span>
+    <div className="app-shell">
+      <a className="skip-link" href="#analyze">Skip to private DNA analysis</a>
+      <header className="global-header">
+        <div className="header-inner">
+          <a className="brand-lockup" href="#overview" aria-label="Ancestry Audit Layer home">
+            <span className="brand-glyph" aria-hidden="true"><i /><i /><i /></span>
             <span>Ancestry <strong>Audit</strong></span>
           </a>
-          <nav className="site-nav" aria-label="Page sections">
-            <a href="#analyze">Analyze</a>
-            <a href="#evidence">Evidence</a>
-            <a href="#questions">Limits</a>
+          <nav className="site-nav" aria-label="Product sections">
+            <a href="#compare">Trait space</a>
+            <a href="#atlas">Atlas</a>
+            <a href="#research">Research</a>
           </nav>
-        </div>
-
-        <div className="hero-grid">
-          <div className="hero-copy">
-            <p className="eyebrow">DNA literacy &amp; equity</p>
-            <h1>Know what a result can support. <em>See where certainty ends.</em></h1>
-            <p className="lede">
-              A careful interpretation layer for consumer DNA files. It separates measured coverage,
-              cited non-medical traits, and the evidence limits that a responsible report should show.
-            </p>
-            <div className="hero-actions">
-              <a className="primary-link" href="#analyze">Start an audit <span aria-hidden="true">↓</span></a>
-              <p>23andMe raw-data export · no health or ancestry inference</p>
-            </div>
-          </div>
-          <aside className="audit-sequence" aria-label="How the audit works">
-            <p className="sequence-label">The audit sequence</p>
-            <ol>
-              <li><span>01</span><div><strong>Validate the file</strong><small>Format, build, coverage, and no-calls.</small></div></li>
-              <li><span>02</span><div><strong>Interpret the allowlist</strong><small>Only curated, non-medical markers.</small></div></li>
-              <li><span>03</span><div><strong>Expose the limits</strong><small>Evidence context, refusals, and research links.</small></div></li>
-            </ol>
-          </aside>
+          <a className="header-cta" href="#analyze">Audit my data</a>
         </div>
       </header>
 
-      <section className="trust-rail" aria-label="Product safeguards">
-        {TRUST_PROMISES.map((promise) => (
-          <article className="trust-item" key={promise.title}>
-            <span className="trust-icon"><Icon name={promise.icon} size={19} /></span>
-            <div><h2>{promise.title}</h2><p>{promise.description}</p></div>
-          </article>
-        ))}
-      </section>
-
-      <section className="card upload-card" id="analyze" aria-labelledby="upload-heading" aria-busy={loading}>
-        <div className="section-heading card-heading">
-          <div><p className="step-label">Step 01 · Local report</p><h2 id="upload-heading">Analyze a raw-data file</h2></div>
-          <span className="state-pill waiting">Private by design</span>
-        </div>
-        <p className="section-intro upload-intro">Use the extracted 23andMe `.txt` export. The report reads coverage and only its small, reviewed non-medical trait set.</p>
-        <form onSubmit={onSubmit}>
-          <label
-            className={`dropzone${dragging ? " drag" : ""}`}
-            tabIndex={loading ? -1 : 0}
-            role="button"
-            aria-disabled={loading}
-            aria-describedby="file-help privacy-note"
-            onKeyDown={onDropzoneKeyDown}
-            onDragOver={(event) => {
-              event.preventDefault();
-              if (!loading) setDragging(true);
-            }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={onDrop}
-          >
-            <span className="drop-icon"><Icon name="upload" size={30} /></span>
-            <span className="drop-text">
-              <strong>Drop a 23andMe raw .txt file</strong>
-              <span id="file-help">or press Enter to choose one from this device</span>
-            </span>
-            <input
-              ref={inputRef}
-              className="visually-hidden"
-              type="file"
-              accept=".txt,text/plain"
-              disabled={loading}
-              onChange={(event) => pickFile(event.target.files?.[0])}
-            />
-          </label>
-
-          {file ? (
-            <div className="file-row">
-              <p className="filename">
-                <span className="file-check"><Icon name="check" size={17} /></span> Selected: <strong>{file.name}</strong>
-              </p>
-              <button
-                className="text-button"
-                type="button"
-                disabled={loading}
-                onClick={() => inputRef.current?.click()}
-              >
-                Change file
-              </button>
+      <main id="main-content">
+        <section className="hero-surface" id="overview" aria-labelledby="hero-heading">
+          <div className="hero-copy-new">
+            <p className="backed-label"><span>DO</span> BUILT ON DIGITALOCEAN GRADIENT AI</p>
+            <h1 id="hero-heading">Your DNA result,<br /><em>with receipts.</em></h1>
+            <p>
+              Upload a 23andMe export and see the evidence around it: measured traits,
+              comparison context, geographic nuance, and the limits a responsible answer keeps.
+            </p>
+            <div className="hero-actions-new">
+              <a className="hero-primary" href="#analyze">Start a private audit <span>↘</span></a>
+              <a className="hero-secondary" href="#compare">Explore the preview</a>
             </div>
-          ) : (
-            <p className="empty-inline">No file selected yet.</p>
-          )}
-
-          {fileError && (
-            <p className="error" role="alert">
-              {fileError}
-            </p>
-          )}
-
-          <div className="population-field">
-            <label htmlFor="population-label">
-              Broad population label <span>(optional)</span>
-            </label>
-            <input
-              id="population-label"
-              type="text"
-              value={populationLabel}
-              disabled={loading}
-              maxLength={120}
-              autoComplete="off"
-              aria-describedby="population-help"
-              placeholder="For example: Broadly South Asian"
-              onChange={(event) => setPopulationLabel(event.target.value)}
-            />
-            <p id="population-help">
-              Copy a broad label from your existing ancestry result if you want population-aware
-              context. This app never infers or verifies ancestry from your DNA file.
-            </p>
+            <div className="hero-proof" aria-label="Product proof points">
+              <span><strong>In memory</strong>Raw file handling</span>
+              <span><strong>6</strong>Vetted trait lenses</span>
+              <span><strong>128</strong>Synthetic comparisons</span>
+            </div>
           </div>
 
-          <button className="primary-button" type="submit" disabled={!file || loading}>
-            {loading ? "Analyzing securely…" : "Analyze file"}
-          </button>
-
-          {loading && (
-            <p className="loading-message" role="status" aria-live="polite">
-              <span className="spinner" aria-hidden="true" /> Reading variants in memory. Larger files may
-              take a moment.
-            </p>
-          )}
-        </form>
-        <p className="privacy" id="privacy-note">
-          <Icon name="vault" size={17} /> Your file is processed in memory and is not retained by application code.
-        </p>
-      </section>
-
-      {!result && !loading && (
-        <section className="card status-card result-preview" aria-labelledby="result-empty-heading">
-          <div className="section-heading"><div><p className="step-label">Step 02 · Guided result</p><h2 id="result-empty-heading">A report with its uncertainty attached</h2></div><span className="state-pill waiting">Waiting for a file</span></div>
-          <div className="preview-grid">
-            <p><strong>Coverage</strong><span>What this chip measured—and what it did not.</span></p>
-            <p><strong>Evidence</strong><span>Curated traits with cited transfer limits.</span></p>
-            <p><strong>Boundaries</strong><span>Clear refusals for health and identity claims.</span></p>
+          <div className="product-window hero-window" aria-label="Ancestry Audit product preview">
+            <div className="window-bar">
+              <span className="window-dots"><i /><i /><i /></span>
+              <span>private_report — Ancestry Audit</span>
+              <span className="window-state"><i /> protected</span>
+            </div>
+            <div className="hero-window-body">
+              <div className="mini-sidebar">
+                <span className="mini-logo"><i /><i /><i /></span>
+                <i className="active" /><i /><i /><i />
+                <span className="mini-avatar">AA</span>
+              </div>
+              <div className="mini-dashboard">
+                <div className="mini-dashboard-head"><div><small>Your evidence map</small><strong>Trait space</strong></div><span>128 profiles</span></div>
+                <div className="mini-graph" aria-hidden="true">
+                  <span className="mini-core" />
+                  {Array.from({ length: 30 }, (_, index) => (
+                    <i style={{ "--index": index }} key={index} />
+                  ))}
+                  <svg viewBox="0 0 420 220" preserveAspectRatio="none"><path d="M209 110 55 46M209 110 92 184M209 110 352 42M209 110 366 174M209 110 204 18M209 110 212 204" /></svg>
+                </div>
+                <div className="mini-metrics">
+                  <span><small>Measured</small><strong>6 traits</strong></span>
+                  <span><small>Evidence mode</small><strong>Conservative</strong></span>
+                  <span><small>Raw data retained</small><strong>Never</strong></span>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
-      )}
 
-      {result && (
+        <section className="safeguard-rail" aria-label="Product safeguards">
+          {TRUST_PROMISES.map((promise, index) => (
+            <article key={promise.title}>
+              <span className="safeguard-index">0{index + 1}</span>
+              <span className="safeguard-icon"><Icon name={promise.icon} size={19} /></span>
+              <div><h2>{promise.title}</h2><p>{promise.description}</p></div>
+            </article>
+          ))}
+        </section>
+
+        <section className="product-surface analyze-surface" id="analyze" aria-labelledby="upload-heading" aria-busy={loading}>
+          <div className="surface-heading wide-heading">
+            <div><p className="section-kicker">00 · Begin with the file</p><h2 id="upload-heading">Open the report. Keep the genome private.</h2></div>
+            <span className="surface-badge secure-badge"><Icon name="vault" size={15} /> In-memory processing</span>
+          </div>
+          <p className="surface-lede">The current live backend reads the upload, retains only its reviewed allowlist, and returns a boundary-checked report—not the raw genome.</p>
+
+          <div className="upload-layout">
+            <form className="upload-form" onSubmit={onSubmit}>
+              <label
+                className={`dropzone${dragging ? " drag" : ""}`}
+                tabIndex={loading ? -1 : 0}
+                role="button"
+                aria-disabled={loading}
+                aria-describedby="file-help privacy-note"
+                onKeyDown={onDropzoneKeyDown}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  if (!loading) setDragging(true);
+                }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={onDrop}
+              >
+                <span className="drop-icon"><Icon name="upload" size={28} /></span>
+                <span className="drop-text">
+                  <strong>{file ? file.name : "Drop a 23andMe raw .txt file"}</strong>
+                  <span id="file-help">{file ? "Ready for private analysis" : "or press Enter to choose one from this device"}</span>
+                </span>
+                <span className="file-action">{file ? "Change" : "Browse"}</span>
+                <input
+                  ref={inputRef}
+                  className="visually-hidden"
+                  type="file"
+                  accept=".txt,text/plain"
+                  disabled={loading}
+                  onChange={(event) => pickFile(event.target.files?.[0])}
+                />
+              </label>
+
+              {fileError && <p className="error" role="alert">{fileError}</p>}
+
+              <div className="population-field">
+                <label htmlFor="population-label">Broad result label <span>(optional and user-supplied)</span></label>
+                <input
+                  id="population-label"
+                  type="text"
+                  value={populationLabel}
+                  disabled={loading}
+                  maxLength={120}
+                  autoComplete="off"
+                  aria-describedby="population-help"
+                  placeholder="For example: Broadly South Asian"
+                  onChange={(event) => setPopulationLabel(event.target.value)}
+                />
+                <p id="population-help">Copy an existing broad label for research context. The app does not infer or verify ancestry from DNA.</p>
+              </div>
+
+              <button className="primary-button analyze-button" type="submit" disabled={!file || loading}>
+                {loading ? <><span className="spinner" aria-hidden="true" /> Analyzing securely…</> : <>Build my evidence report <span aria-hidden="true">→</span></>}
+              </button>
+              <p className="privacy" id="privacy-note"><Icon name="shield" size={16} /> No health prediction · no exact ethnicity · no raw-genome response</p>
+            </form>
+
+            <aside className="analysis-sequence" aria-label="What happens after upload">
+              <p className="inspector-label">Inside the audit</p>
+              <ol>
+                <li><span>01</span><div><strong>Validate</strong><p>Verify the vendor, build, rows, and no-calls.</p></div></li>
+                <li><span>02</span><div><strong>Minimize</strong><p>Retain only the reviewed, non-medical allowlist.</p></div></li>
+                <li><span>03</span><div><strong>Contextualize</strong><p>Pair every result with evidence and transfer limits.</p></div></li>
+                <li><span>04</span><div><strong>Ask</strong><p>Send only the safe report fields to Gradient AI.</p></div></li>
+              </ol>
+              <div className={result?.data ? "analysis-state complete" : result?.error ? "analysis-state failed" : "analysis-state"}>
+                <span />
+                <div><small>Report state</small><strong>{result?.data ? "Ready to explore" : result?.error ? "Needs attention" : loading ? "Processing locally" : "Waiting for a file"}</strong></div>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <TraitNetwork reportData={result?.data} />
+        <AncestryGlobe populationLabel={result?.submittedPopulationLabel || populationLabel.trim()} />
+        <ResearchWorkspace reportData={result?.data} />
+
         <section
-          className="card"
+          className="product-surface report-surface"
+          id="report"
           aria-live="polite"
           aria-labelledby="result-heading"
           ref={resultRef}
           tabIndex={-1}
         >
-          <h2 id="result-heading">2. Guided result</h2>
-          {result.error ? (
+          <div className="surface-heading wide-heading">
+            <div><p className="section-kicker">04 · Evidence report</p><h2 id="result-heading">The readable record behind the visuals.</h2></div>
+            <span className={`surface-badge ${result?.data ? "ready-badge" : ""}`}>{result?.data ? "Analysis ready" : "Awaiting analysis"}</span>
+          </div>
+          {!result && (
+            <div className="report-preview-new">
+              <p><span>Coverage</span><strong>What the chip measured</strong><small>File format, build, call rate, and missing rows.</small></p>
+              <p><span>Traits</span><strong>Six non-medical lenses</strong><small>Interpretations remain paired with evidence limits.</small></p>
+              <p><span>Boundaries</span><strong>Refusals you can see</strong><small>No diagnosis, exact ethnicity, or unsupported certainty.</small></p>
+            </div>
+          )}
+          {result?.error && (
             <div className="error-panel" role="alert">
               <strong>We could not complete the analysis.</strong>
               <p>{result.error}</p>
-              <button className="secondary-button" type="button" onClick={() => inputRef.current?.click()}>
-                Choose another file
-              </button>
+              <button className="secondary-button" type="button" onClick={() => inputRef.current?.click()}>Choose another file</button>
             </div>
-          ) : (
-            <Results
-              data={result.data}
-              submittedPopulationLabel={result.submittedPopulationLabel}
-            />
           )}
+          {result?.data && <Results data={result.data} submittedPopulationLabel={result.submittedPopulationLabel} />}
         </section>
-      )}
 
-      <ReferencePanelChart />
+        <div className="reference-panel-wrap"><ReferencePanelChart /></div>
 
-      <EvidenceAtlasRoadmap />
-
-      <QuestionGuide
-        analysisReady={hasAnalysis}
-        selected={selectedCategory}
-        onSelect={setSelectedCategory}
-        reportData={result?.data}
-      />
-    </main>
+        <footer className="site-footer">
+          <a className="brand-lockup" href="#overview"><span className="brand-glyph small"><i /><i /><i /></span><span>Ancestry <strong>Audit</strong></span></a>
+          <p>Interpretation and transparency for consumer DNA results. Built for AI for Social Good with DigitalOcean.</p>
+          <div><a href="#analyze">Analyze</a><a href="#compare">Compare</a><a href="#atlas">Atlas</a><a href="#research">Research</a></div>
+        </footer>
+      </main>
+    </div>
   );
 }
 

@@ -1,12 +1,24 @@
 # Frontend–backend integration contract
 
-Status: implemented behavior as of 2026-07-11, with proposed aggregate-data
-guidance clearly marked as **planned**.
+Status: updated 2026-07-11 (second pass) — the cohort-comparison and
+population-map endpoints described below are now implemented, replacing the
+earlier "planned aggregate-data guidance" placeholder for those two features.
 
 This document is the handoff between the React frontend and the Flask service.
-The implemented API is intentionally small: a health check, deterministic
-23andMe-file analysis, and six server-vetted narrative categories. It is not a
-general ancestry, peer-comparison, mapping, or chat API.
+The implemented API: a health check, deterministic 23andMe-file analysis, six
+server-vetted narrative categories, a synthetic-but-cited cohort-comparison
+graph, and a real-reference-population map. There is still no live
+peer-to-peer comparison against other real uploaders and no free-form chat
+passthrough — see "Explicitly not implemented" below.
+
+## The four planned UI surfaces, mapped to backend routes
+
+| UI surface | Backend route | Notes |
+|---|---|---|
+| YC-style visual overhaul (shell, typography, layout) | none | Pure frontend/visual — no new data, no backend change implied. |
+| 3D force-graph "compare to 100+ profiles" | `POST /api/comparison-cohort` | Synthetic-but-cited cohort; see below. |
+| 3D globe "where you stand" / cross-country DNA framing | `POST /api/population-map` | Real named reference populations; see below. |
+| Research + chat AI | `POST /api/narrative` (existing, unchanged) | Still exactly the six fixed categories — no new free-text endpoint was added for this pass. |
 
 ## One origin in development and production
 
@@ -31,9 +43,11 @@ browser
       └── Flask/Gunicorn on App Platform
           ├── / and static assets (built Vite app)
           ├── /api/analyze (deterministic local report)
-          └── /api/narrative (server-side Gradient AI call)
-              ├── configured agent/RAG path
-              └── serverless inference fallback
+          ├── /api/narrative (server-side Gradient AI call)
+          │   ├── configured agent/RAG path
+          │   └── serverless inference fallback
+          ├── /api/comparison-cohort (synthetic, cited cohort graph)
+          └── /api/population-map (real, cited reference populations)
 ```
 
 `DIGITAL_OCEAN_MODEL_ACCESS_KEY` and `AGENT_ACCESS_KEY` are server runtime
@@ -164,73 +178,119 @@ Parser errors may additionally include privacy-safe aggregate `details`.
 Unexpected platform/proxy failures are outside this stable application-error
 set and should use the frontend's generic service-unavailable state.
 
+### `POST /api/comparison-cohort`
+
+Backs the 3D force-graph "compare to others" view (`3d-force-graph` /
+`react-force-graph-3d`). Consumes the same already-analyzed `report` JSON as
+`/api/narrative` — never a raw upload:
+
+```json
+{"report": {"report_version": "1.0"}}
+```
+
+There is no live dataset of 100+ consented uploaders — the repository only
+has three open-consent PGP demo files. Every non-"you" node is therefore a
+**labeled synthetic profile**, procedurally generated per request from
+published, cited population allele-frequency literature (see
+`backend/comparison.py` for the citation list), using the same broad
+population buckets as `backend/ancestry.py`. Generation is deterministic: the
+same analyzed report always returns the same graph (seeded from the report's
+`stats`), so the frontend can safely cache/re-render without refetching.
+
+Success: HTTP 200
+
+```json
+{
+  "nodes": [
+    {"id": "you", "is_synthetic": false, "is_user": true, "label": "You", "group": null, "traits": {"rs4988235": "AG"}},
+    {"id": "cohort-1", "is_synthetic": true, "is_user": false, "label": "Illustrative profile 1", "group": "european", "traits": {"rs4988235": "AA", "...": "..."}}
+  ],
+  "links": [
+    {"source": "you", "target": "cohort-1", "value": 0.62}
+  ],
+  "cohort_size": 120,
+  "generation_method": "synthetic_from_published_allele_frequencies",
+  "disclaimer": "Every node except \"you\" is a synthetic, illustrative profile ...",
+  "citations": [{"label": "...", "url": "https://..."}]
+}
+```
+
+`nodes`/`links` are already shaped for `ForceGraph3D().graphData({nodes, links})`
+— `link.value` (0–1) is a same-population-marker match fraction, suitable
+for edge distance/opacity. **The frontend must render `disclaimer` (or
+equivalent copy) visibly whenever this view is shown**, and must not relabel
+`is_synthetic: true` nodes as real users. `is_user`/`is_synthetic` are
+mutually exclusive and exhaustive across `nodes`.
+
+Stable application errors: `400 missing_report` (same shape as `/api/narrative`).
+
+### `POST /api/population-map`
+
+Backs the 3D globe "where you stand" view. Pair it with `globe.gl` (same
+author/rendering stack as `3d-force-graph`, built for exactly this: real
+lat/lon markers on a WebGL globe), not `3d-force-graph` itself, which is a
+node-link graph library without globe/basemap support. Consumes the same
+`report` JSON:
+
+```json
+{"report": {"report_version": "1.0"}}
+```
+
+Unlike the cohort graph, every entry here is a **real, named, citable
+reference population** (1000 Genomes Project + Human Genome Diversity
+Project panels — see `backend/population_map.py`), plotted at its real public
+sampling location. Nothing is fabricated. Each entry carries an
+`expected_similarity` (0–1) computed from the same published allele-frequency
+tables against the user's own already-measured, boundary-checked trait
+genotypes — this is an aggregate literature-derived expectation, not a
+genetic-relatedness or ancestry-percentage claim.
+
+Success: HTTP 200
+
+```json
+{
+  "populations": [
+    {"id": "GBR", "label": "British in England and Scotland", "country": "United Kingdom", "lat": 54.0, "lon": -2.0, "group": "european", "source": "https://...", "expected_similarity": 0.71}
+  ],
+  "you_marker": {"population_id": "GIH", "source": "user_supplied_label", "label": "South Asian"},
+  "disclaimer": "This map shows real, named reference populations ...",
+  "citations": [{"label": "...", "url": "https://..."}]
+}
+```
+
+`you_marker` is `null` unless the user themselves supplied a recognized broad
+population label earlier in the existing `/api/analyze` flow (it reads
+`report.population_context.canonical_key`, the same field `/api/narrative`
+already treats as user-supplied context). **The backend never infers a
+location or country from DNA** — if the frontend wants the literal "a person
+in Germany can have UK-pattern DNA" framing, express it only as: population
+`X` (real, named, at its real sampling coordinates) has expected similarity
+`Y` to the user's measured traits, using `expected_similarity` and `label`/
+`country` verbatim. Do not invent a percentage-ancestry or geolocation claim
+beyond what these two fields state. **Render `disclaimer` visibly** whenever
+this view is shown, identically to the cohort graph.
+
+Stable application errors: `400 missing_report` (same shape as `/api/narrative`).
+
 ## Explicitly not implemented
 
 There is currently:
 
-- no live peer/profile network endpoint and no database of 100+ users exposed
-  to the browser;
-- no ancestry-map, inferred-country, user-location, globe-position, or genetic
-  clustering endpoint;
+- no live peer/profile network endpoint and no database of 100+ real
+  consented users — `/api/comparison-cohort` is synthetic-but-cited, not live
+  peer data (see above);
+- no endpoint that infers a user's location/country/ancestry from DNA —
+  `/api/population-map`'s `you_marker` only ever echoes a label the user
+  typed themselves, never a DNA-derived inference;
 - no free-form ChatGPT/chat endpoint, conversation store, or arbitrary prompt
-  passthrough; and
-- no endpoint that compares one uploaded genome with another person's genome.
+  passthrough (the research/chat surface is still the six fixed
+  `/api/narrative` categories); and
+- no endpoint that compares one uploaded genome directly with another real
+  person's uploaded genome.
 
-Any current network or globe preview must therefore use version-controlled,
-synthetic demo data or cited static aggregate evidence, label that status in the
-visible UI, and remain useful without implying a live backend. Uploaded DNA must
-never place a person on a map, assign a country/community, or create a node among
-real people.
-
-## Planned aggregate-data guidance (not live routes)
-
-If a backend later replaces local demo data, add read-only, same-origin
-aggregate endpoints under `/api/aggregates/*`. The names below are proposals,
-not callable routes and not a promise of backend availability:
-
-| Proposed route | Safe purpose | Must not return |
-|---|---|---|
-| `GET /api/aggregates/trait-network` | Synthetic profiles or sufficiently large cohort summaries for allowlisted, non-medical trait comparison. | Raw genotypes, upload IDs, names, contact data, person-level research records, or nodes representing identifiable people. |
-| `GET /api/aggregates/evidence-atlas` | Cited counts and coverage metadata for published reference/validation evidence. | A user coordinate, inferred ancestry/country, or geography manufactured from an analytical population label. |
-
-A future aggregate response should be versioned and self-describing:
-
-```json
-{
-  "schema_version": "1.0",
-  "dataset_id": "example-dataset",
-  "dataset_version": "2026-07-11",
-  "synthetic": true,
-  "aggregate_only": true,
-  "updated_at": "2026-07-11T00:00:00Z",
-  "provenance": [],
-  "methodology": "How records and metrics were produced.",
-  "caveat": "Visible limitation and identity-safety copy.",
-  "data": {}
-}
-```
-
-Before switching the frontend from local data to either route, the backend and
-frontend owners should agree on and test:
-
-1. JSON Schema or equivalent fixtures, schema/dataset version handling, and
-   stable error codes.
-2. Provenance for every non-synthetic metric: source URL, publication date,
-   denominator, metric definition, methodology, and last-review date.
-3. Privacy thresholds and suppression rules for small cells. Prefer cohort
-   counts/distributions; do not ship real-person nodes merely because names are
-   removed.
-4. A neutral default state. A user's deterministic allowlisted result may be
-   shown beside an aggregate distribution, but never embedded as a genetic
-   cluster or map coordinate.
-5. Geographic integrity. If a source reports an analytical assignment rather
-   than sample origin, render a non-geographic tile/table instead of country
-   geometry.
-6. Loading, empty, stale-version, partial-data, offline, and accessible table
-   fallbacks. Synthetic fixtures remain visibly labelled until the live response
-   passes these checks.
-7. Server-side access to any database or DigitalOcean service. Runtime
-   credentials remain in App Platform and never cross into browser JavaScript.
+Both new endpoints return a top-level `disclaimer` string specifically so the
+frontend does not need to hardcode this framing — display it, don't paraphrase
+it away.
 
 ## Secret-free smoke check
 

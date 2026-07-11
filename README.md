@@ -51,6 +51,14 @@ repository.
 
 ## Iteration log
 
+- **2026-07-11 — Four-surface frontend verification (in progress):** The
+  integrated React shell, upload/report path, deterministic visualization data,
+  lazy 3D scenes, and research workspace compile successfully. All `13` Node
+  tests pass, the Vite production build succeeds, and `git diff --check` is
+  clean. The main bundle remains about 206 kB (65 kB gzip); Three.js and the
+  official force graph are separate lazy chunks (about 182 kB and 201 kB gzip)
+  and are not in the initial bundle. Browser-based desktop/mobile and WebGL
+  interaction QA remains before the redesign is marked complete.
 - **2026-07-11 — Four-surface frontend redesign (started):** Rebuild the
   frontend around the supplied dark YC-backed product reference: a restrained
   overview shell, an interactive 100+ profile trait-comparison network, a 3D
@@ -64,6 +72,14 @@ repository.
   applied. Added a tested same-origin frontend API client for the existing
   multipart analysis and six-category narrative contracts, including stable
   error handling and safe citation-URL filtering.
+  Added deterministic, genotype-safe preview data (128 synthetic comparison
+  profiles, six trait hubs, and six declared-context globe regions), lazy
+  WebGL adapters for the official force-graph package and Three.js, and a
+  constrained research-chat workspace that uses only the six server-vetted
+  narrative categories. Added `docs/frontend-backend-contract.md` and the
+  secret-free `scripts/smoke_frontend_api.sh`; syntax, mocked endpoint behavior,
+  and focused Flask validation checks pass without uploading a genome or
+  invoking a model.
 - **2026-07-11 — DigitalOcean credential verifier (started):** Validate and
   publish the standalone four-check diagnostic for serverless inference,
   control-plane Knowledge Bases, deployed-agent RAG evidence, and credential
@@ -298,6 +314,61 @@ repository.
   answer to sometimes take 60–90s and occasionally silently fall back to the
   faster, uncited serverless path. This is graceful (never a hard failure)
   but worth knowing before presenting live.
+- **2026-07-11 — Knowledge Base creation declined by product owner (recorded):**
+  Offered to run `scripts/create_kb.sh --apply-web` to provision the DO-managed
+  Knowledge Base (the biggest remaining gap for the Gradient AI prize track).
+  Product owner declined — no billable DO infrastructure created this session.
+  The gap (zero visible KBs, empty `citations` on `/api/narrative`) remains
+  open and unchanged from the entry above; the deterministic guided report and
+  serverless-fallback narrative path remain the safe, fully-working demo path
+  regardless.
+- **2026-07-11 — Backend support for Codex's four-surface frontend redesign
+  (completed):** Codex owns all four frontend surfaces (YC-style visual
+  overhaul, 3D force-graph cohort comparison, 3D globe/map, research+chat) —
+  see that owner's own entry above. Per explicit product-owner direction, this
+  backend agent stayed backend-only and did not touch any `frontend/` file.
+  Built the two new data endpoints Codex's graph/globe components need, plus
+  the full connection spec, so Codex can implement against a stable contract
+  without waiting on backend iteration:
+  - `backend/comparison.py` + `POST /api/comparison-cohort` — a
+    `3d-force-graph`-shaped `{nodes, links}` response for the "compare to 100+
+    profiles" view. There is no real dataset of 100+ consented uploaders (the
+    repo has three open-consent PGP demo files), so every non-"you" node is a
+    **labeled synthetic profile** (`is_synthetic: true`), procedurally drawn
+    per request from published, cited population allele-frequency literature
+    (Bersaglieri 2004 lactase persistence, Yoshiura 2006 earwax type, Yang 2003
+    ACTN3, Wooding 2004 TAS2R38), using the same broad population buckets as
+    `backend/ancestry.py`. Deterministic: seeded from the report's own `stats`,
+    so the same analyzed file always returns the same graph. The response
+    carries a mandatory top-level `disclaimer` and `citations`.
+  - `backend/population_map.py` + `POST /api/population-map` — real, named
+    reference populations (1000 Genomes Project + HGDP panels) at their real
+    public sampling coordinates, each with an `expected_similarity` (0-1)
+    computed from the same cited allele-frequency tables against the user's
+    own measured traits. The optional `you_marker` is set **only** when the
+    user themselves supplied a recognized broad population label earlier via
+    the existing `/api/analyze` flow (`population_context.canonical_key`) —
+    the backend never infers a location, country, or ancestry from DNA. Also
+    carries a mandatory `disclaimer` and `citations`.
+  - **Product-framing note:** the product owner explicitly asked for and
+    confirmed (overriding this agent's flagged safety concern) a literal
+    "where you stand" / cross-country DNA-sharing framing for the map, which
+    is in tension with this project's own previously-documented hard boundary
+    against DNA-based geolocation (see `docs/ui-visualization-roadmap.md`).
+    The implementation resolves this by keeping every fact the API returns
+    literally true (real reference populations at real coordinates; an
+    aggregate literature-derived similarity score; a marker that only ever
+    echoes what the user typed) and pushing the "where you stand" *narrative*
+    entirely into frontend copy, not backend inference — see
+    `docs/frontend-backend-contract.md` for the exact do/don't phrasing
+    guidance given to Codex.
+  - Updated `docs/frontend-backend-contract.md`: added a "four planned UI
+    surfaces, mapped to backend routes" table and full request/response specs
+    for both new endpoints, and corrected the now-stale "Explicitly not
+    implemented" / "planned aggregate-data" sections that predated this work.
+  - Added `tests/test_comparison.py` (5 tests), `tests/test_population_map.py`
+    (5 tests), and `tests/test_app_visualizations.py` (4 Flask integration
+    tests). Full suite: `96 passed`.
 
 ## Hard boundaries (by design, not just policy)
 - No ancestry inference — interpretation only.
@@ -342,7 +413,7 @@ npm run build                  # -> frontend/dist, served by Flask at /
 
 - [ ] Four-surface frontend redesign is implemented and visually verified at
       desktop and mobile widths.
-- [ ] Frontend/backend integration contract documents current endpoints and
+- [x] Frontend/backend integration contract documents current endpoints and
       clearly separates live behavior from planned aggregate visualization data.
 - Strict 23andMe text validation with exact call/no-call, malformed, duplicate,
   chromosome, reference-build, and coverage accounting; the API reports that
@@ -363,8 +434,12 @@ npm run build                  # -> frontend/dist, served by Flask at /
   Pakistani subset, unassigned count, methodology caveat, and integrity tests.
 - Dated research bridge with participation, status, consent/privacy context, and
   official sources.
-- Real open-consent PGP v3/v4/v5 API validation, 78 Python tests, four Node
+- Real open-consent PGP v3/v4/v5 API validation, 96 Python tests, four Node
   data/interaction tests, a successful production build, and local visual QA.
+- [x] `/api/comparison-cohort` (synthetic, cited cohort graph) and
+      `/api/population-map` (real, cited reference populations) backend
+      endpoints, documented in `docs/frontend-backend-contract.md`, for
+      Codex's 3D force-graph and 3D globe surfaces.
 
 ### DigitalOcean deployment and AI handoff
 
@@ -406,9 +481,26 @@ not verified. It does not require any DigitalOcean credential.
   v3/v4/v5 validation records.
 - [`docs/ui-visualization-roadmap.md`](docs/ui-visualization-roadmap.md) — safe
   2D/3D evidence-atlas specification and copy-ready implementation prompt.
+- [`docs/frontend-backend-contract.md`](docs/frontend-backend-contract.md) —
+  implemented same-origin API contract, privacy/latency behavior, and the
+  connection spec for all four planned frontend surfaces (comparison-cohort
+  and population-map endpoints are now implemented, not planned).
 
 The live URL is verified above. Final screenshots, recording, team credits, and
 any bracketed Gradient AI claims must be filled only after their separate checks.
+
+### Backend support for the four-surface frontend redesign
+
+- [x] `POST /api/comparison-cohort` — synthetic-but-cited cohort graph for the
+      3D force-graph "compare to others" view (`backend/comparison.py`).
+- [x] `POST /api/population-map` — real, named reference populations for the
+      3D globe view (`backend/population_map.py`).
+- [x] Connection spec for all four planned UI surfaces documented in
+      `docs/frontend-backend-contract.md`.
+- [x] Pytest coverage for both new modules and their Flask routes (14 new
+      tests; 96 total).
+- [ ] Codex has implemented and visually verified all four frontend surfaces
+      against this contract (frontend-owned; tracked in Codex's own entries).
 
 ### Verification commands
 
@@ -417,7 +509,7 @@ python -m pip check
 python -m pytest -q
 npm --prefix frontend test
 npm --prefix frontend run build
-bash -n scripts/create_kb.sh scripts/run_evals.sh
+bash -n scripts/create_kb.sh scripts/run_evals.sh scripts/smoke_frontend_api.sh
 scripts/create_kb.sh --list >/dev/null
 scripts/run_evals.sh --check
 git diff --check
@@ -432,5 +524,8 @@ git diff --check
 - [x] Responsive accessible frontend and local production-path visual QA.
 - [x] Automated Python/frontend checks and submission-document scaffolds.
 - [x] Live DigitalOcean App Platform frontend, homepage, health, and invalid-upload proof.
+- [x] Backend cohort-comparison and population-map endpoints, plus connection
+      spec, for Codex's four-surface frontend redesign.
 - [ ] Live DigitalOcean AI agent, Knowledge Base, guardrails, retrieval citations, and valid-upload proof.
+- [ ] Codex's four-surface frontend redesign implemented and visually verified.
 - [ ] Final live screenshots, demo recording, and Devpost submission.

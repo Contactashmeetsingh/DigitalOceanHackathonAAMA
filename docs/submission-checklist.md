@@ -7,10 +7,17 @@ checks remain intentionally open until the separate deployment handoff.
 
 - [ ] YC-inspired four-surface shell renders overview, trait network, 3D globe,
       and research workspace at desktop and mobile widths.
-- [ ] Trait-network and globe demo data are explicitly labeled synthetic until
-      de-identified aggregate visualization endpoints are connected.
-- [ ] Frontend/backend integration contract is documented and locally checked.
-- [x] Full Python test suite passes.
+- [x] Backend endpoints for the trait-network (`/api/comparison-cohort`) and
+      globe (`/api/population-map`) surfaces are implemented and return a
+      mandatory `disclaimer`/`citations` payload.
+- [ ] Frontend renders the trait-network as explicitly synthetic and the globe
+      as real cited reference populations, using each response's `disclaimer`
+      (frontend-owned; not yet visually verified).
+- [x] Frontend/backend integration contract is documented and locally checked,
+      including the `/api/comparison-cohort` and `/api/population-map`
+      endpoint specs for the trait-network and 3D globe surfaces.
+- [x] Full Python test suite passes (96 tests, including new coverage for
+      `backend/comparison.py`, `backend/population_map.py`, and their routes).
 - [x] React production build passes.
 - [x] A valid PGP 23andMe export produces the complete guided report.
 - [x] Invalid, empty, renamed, and non-23andMe files fail safely.
