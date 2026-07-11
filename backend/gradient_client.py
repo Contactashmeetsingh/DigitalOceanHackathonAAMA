@@ -16,7 +16,7 @@ from __future__ import annotations
 import os
 
 import requests
-from openai import OpenAI, OpenAIError
+from openai import DefaultHttpxClient, OpenAI, OpenAIError
 
 AGENT_ENDPOINT = os.environ.get("GRADIENT_AGENT_ENDPOINT", "").rstrip("/")
 AGENT_ACCESS_KEY = os.environ.get("AGENT_ACCESS_KEY", "")
@@ -81,7 +81,14 @@ def _via_agent(messages: list[dict]) -> dict:
 
 
 def _via_serverless(messages: list[dict]) -> dict:
-    client = OpenAI(base_url=INFERENCE_BASE_URL, api_key=MODEL_ACCESS_KEY)
+    # An explicit http_client avoids passing openai 1.51.0's default `proxies=`
+    # kwarg into newer httpx releases, which removed that parameter and raise
+    # `TypeError: Client.__init__() got an unexpected keyword argument 'proxies'`.
+    client = OpenAI(
+        base_url=INFERENCE_BASE_URL,
+        api_key=MODEL_ACCESS_KEY,
+        http_client=DefaultHttpxClient(timeout=REQUEST_TIMEOUT_S),
+    )
     try:
         completion = client.chat.completions.create(model=FALLBACK_MODEL, messages=messages)
     except OpenAIError as error:
