@@ -11,6 +11,17 @@ on the **DigitalOcean Gradient AI Platform**.
 
 ## Iteration log
 
+- **2026-07-11 — Agent evaluation harness (started):** Verify the current
+  DigitalOcean model-evaluation API, add a small prompt/expected-behavior dataset
+  covering citations, medical refusal, ancestry precision limits, and
+  reference-panel bias, then add a fail-closed control-plane runner.
+- **2026-07-11 — Agent evaluation harness (completed):** Added eight JSONL
+  ground-truth cases and a fail-closed runner for dataset presigning/upload,
+  live model/metric discovery, `/model_evaluation_runs`, and status checks. The
+  runner applies the version-controlled agent system prompt and never prints
+  credentials or presigned URLs. Confirmed local schema/shell validation, live
+  read-only resource discovery, and all five parser tests; no billable run was
+  started.
 - **2026-07-11 — Reference-panel visualization (started):** Verify a single
   comparable population-composition dataset, add a lightweight accessible chart
   that makes representation imbalance legible, label denominators and source
@@ -106,6 +117,30 @@ inference / fallback), an **agent access key** (RAG agent endpoint), and a
 called at `$GRADIENT_AGENT_ENDPOINT/api/v1/chat/completions` with
 `include_retrieval_info: true` for citations. Only the **Sensitive-Data** guardrail
 is attached (Content-Moderation false-positives on genomic text).
+
+### Evaluation regression set
+
+The small model-evaluation dataset at `evals/agent_behavior.jsonl` checks cited
+answers, medical refusal, precise-ancestry refusal, and reference-panel-bias
+explanations. Validate and discover resource IDs first:
+
+```bash
+scripts/run_evals.sh --check
+scripts/run_evals.sh --resources
+```
+
+Then set `DO_EVAL_CANDIDATE_MODEL_UUID`, `DO_EVAL_JUDGE_MODEL_UUID`, and
+comma-separated `DO_EVAL_METRIC_UUIDS` in the environment and explicitly run:
+
+```bash
+scripts/run_evals.sh --upload-and-run
+scripts/run_evals.sh --status <evaluation-run-uuid>
+```
+
+DigitalOcean's `/model_evaluation_runs` API evaluates a serverless candidate
+model using `agent/system_prompt.md`; it does not execute the deployed RAG agent.
+Use the Agent Platform workspace evaluation UI for retrieval/context-quality
+metrics, and manually review LLM-judge rationales before changing production.
 
 ## Build status & roadmap
 
