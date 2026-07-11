@@ -11,6 +11,17 @@ on the **DigitalOcean Gradient AI Platform**.
 
 ## Iteration log
 
+- **2026-07-11 — Frontend states and accessibility (started):** Preserve the
+  current upload/analyze endpoint flow while adding explicit loading, empty, and
+  error feedback; keyboard/focus improvements; readable high-contrast styling;
+  and six tappable, plain-language Q&A category prompts.
+- **2026-07-11 — Frontend states and accessibility (completed):** Added file
+  validation, upload/zero-result/network states, result focus management,
+  keyboard-operable controls, semantic result markup, reduced-motion and
+  high-contrast styling, and six responsive suggested-question cards without
+  inventing a Q&A endpoint. Confirmed with a Vite production build and all five
+  parser tests; npm reported two dependency advisories, left unchanged to avoid
+  an unrequested breaking upgrade.
 - **2026-07-11 — Research bridge curation (started):** Verify current official
   participation/status pages for genomics programs serving underrepresented
   populations, expand the dated study records with consent/privacy context, and
