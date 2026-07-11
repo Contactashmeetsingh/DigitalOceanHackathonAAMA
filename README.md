@@ -160,6 +160,17 @@ repository.
   source URLs, show the citation count inline, and display an amber verification
   warning when no retrieval citations return. The full suite now passes with 86
   Python tests, seven frontend tests, and a clean production build.
+- **2026-07-11 — Managed genetics-literacy RAG corpus (in progress):** Created
+  `genetics-literacy-kb` in `tor1` with a DO-managed OpenSearch database and the
+  GTE Large EN v1.5 embedding model; attached eight open full-text population-
+  genetics sources and connected the KB to the deployed Gradient agent. Added
+  reproducible, idempotent controls for creation, crawler application, sanitized
+  PDF upload, indexing, status, and endpoint-matched agent attachment. Added
+  open peer-reviewed Qatar Genome (Middle Eastern) and GLAD (admixed Latin
+  American) sources to close explicit corpus gaps. The first indexing job is in
+  progress; the presigned-PDF add-source request is currently rejected by the
+  control plane and is recorded as a visible limitation rather than reported as
+  ingested.
 - **2026-07-11 — DigitalOcean credential verifier (started):** Validate and
   publish the standalone four-check diagnostic for serverless inference,
   control-plane Knowledge Bases, deployed-agent RAG evidence, and credential

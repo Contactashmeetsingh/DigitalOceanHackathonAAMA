@@ -56,6 +56,16 @@ that any population is homogeneous.
   https://pmc.ncbi.nlm.nih.gov/articles/PMC8762266/ — adds 134 Native American
   genomes to 1000 Genomes and measures gains, while explicitly documenting the
   panel's Mexico-heavy limitations.
+- **Thousands of Qatari genomes inform human migration history and improve
+  imputation of Arab haplotypes** *(Nature Communications, 2021)* —
+  https://pmc.ncbi.nlm.nih.gov/articles/PMC8511259/ — analyzes 6,218 whole
+  genomes and builds a 12,432-haplotype panel for Arab and wider Middle Eastern
+  populations, adding a region absent from 1000 Genomes Phase 3 labels.
+- **Genetics of Latin American Diversity Project** *(Cell Genomics, 2024)* —
+  https://pmc.ncbi.nlm.nih.gov/articles/PMC11605695/ — documents GLADdb's
+  53,738 participants across 39 studies and 46 regions, heterogeneous admixture,
+  consent/access constraints, and a summary-statistic matching method that does
+  not transfer individual-level genotypes.
 
 ## Operating notes
 
@@ -63,10 +73,15 @@ that any population is homogeneous.
 - Run `scripts/create_kb.sh --check` before mutation; it verifies the named KB
   exists and exposes a DO Managed OpenSearch `database_id`.
 - HTML sources use section-based web-crawler entries. The two dense bioRxiv PDFs
-  use semantic chunking and are downloaded by `--download-pdfs` for manual file
-  upload in the DigitalOcean console.
-- `--apply-web` adds only missing crawler URLs. It does not create a database,
-  upload local files, attach an agent, or start unrelated infrastructure.
+  use semantic chunking and are downloaded by `--download-pdfs`. The control
+  plane currently grants their presigned uploads but rejects the documented
+  file object on the add-data-source endpoint; `--upload-pdfs` therefore fails
+  visibly instead of claiming ingestion. The open full-text corpus remains the
+  production retrieval source until DigitalOcean accepts that object or the
+  files are attached through the console.
+- `--apply-web` adds only missing crawler URLs. `--index` starts indexing for the
+  named KB, `--status` reports its latest job, and `--attach` selects the intended
+  agent by the configured endpoint rather than guessing from account order.
 - Adding or changing sources requires indexing. After web addition and PDF
   upload, monitor the indexing job and re-run indexing in the DigitalOcean
   console (or via the control-plane API) before expecting agent answers to use
