@@ -1,0 +1,26 @@
+# DigitalOcean App Platform spec.
+# Deploy: doctl apps create --spec .do/app.yaml
+# Update: doctl apps update <APP_ID> --spec .do/app.yaml
+name: ancestry-audit-layer
+region: nyc
+services:
+  - name: web
+    dockerfile_path: Dockerfile
+    github:
+      repo: Contactashmeetsingh/DigitalOceanHackathonAAMA
+      branch: main
+      deploy_on_push: true
+    http_port: 8080
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    instance_count: 1
+    health_check:
+      http_path: /health
+    envs:
+      - key: DIGITAL_OCEAN_MODEL_ACCESS_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: GRADIENT_AGENT_ENDPOINT
+        scope: RUN_TIME
+      - key: AGENT_ACCESS_KEY
+        scope: RUN_TIME
+        type: SECRET

@@ -1,3 +1,16 @@
+# --- Project-specific ---
+# Secrets: never commit real keys
+.env
+# Real genome files are never committed (privacy + size)
+data/samples/*.txt
+data/samples/*.csv
+# Local virtualenv
+venv/
+.venv/
+# Node / Vite frontend
+node_modules/
+frontend/dist/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -221,3 +234,5 @@ __marimo__/
 ".env" 
 "data/*.txt" 
 "!data/sample_genome.txt" 
+
+.agent

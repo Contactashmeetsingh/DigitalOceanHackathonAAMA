@@ -1,0 +1,33 @@
+{
+  "disclaimer": "Illustrative list, curated as of 2026-07-10. Recruiting status changes frequently — verify on each study's official site before acting.",
+  "studies": [
+    {
+      "name": "All of Us Research Program",
+      "consortium": "US National Institutes of Health",
+      "focus": "Building a diverse US health database; actively prioritizes historically underrepresented communities.",
+      "populations": ["all", "underrepresented US communities"],
+      "url": "https://allofus.nih.gov/"
+    },
+    {
+      "name": "H3Africa",
+      "consortium": "Human Heredity and Health in Africa",
+      "focus": "Genomics research led by African scientists across the continent.",
+      "populations": ["African", "Sub-Saharan African"],
+      "url": "https://h3africa.org/"
+    },
+    {
+      "name": "GenomeAsia 100K",
+      "consortium": "GenomeAsia 100K Consortium",
+      "focus": "Sequencing to close the Asian representation gap in reference panels.",
+      "populations": ["South Asian", "Southeast Asian", "East Asian"],
+      "url": "https://genomeasia100k.org/"
+    },
+    {
+      "name": "PAGE Study",
+      "consortium": "Population Architecture using Genomics and Epidemiology",
+      "focus": "Genetic studies in ancestrally diverse populations.",
+      "populations": ["Hispanic/Latino", "African American", "Asian", "Native Hawaiian"],
+      "url": "https://www.pagestudy.org/"
+    }
+  ]
+}
