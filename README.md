@@ -9,6 +9,17 @@ ancestry tools.
 Built for **AI for Social Good — Hack with MLH & DigitalOcean** (SF, Jul 10–11 2026)
 on the **DigitalOcean Gradient AI Platform**.
 
+## Iteration log
+
+- **2026-07-11 — Trait allowlist expansion (started):** Verify and add only
+  well-replicated, non-medical genotype interpretations for lactase persistence,
+  earwax type, TAS2R38 bitter tasting, photic sneeze, ACTN3 muscle composition,
+  and cilantro taste, then run focused checks plus the parser regression suite.
+- **2026-07-11 — Trait allowlist expansion (completed):** Added eight cited SNP
+  entries with build-37 plus-strand genotype maps, population/evidence caveats,
+  deterministic missing-chip handling, and lookup output fields for interpretation,
+  evidence, and citation. Confirmed with `8 passed` across trait and parser tests.
+
 ## Hard boundaries (by design, not just policy)
 - No ancestry inference — interpretation only.
 - No health/disease claims — traits are illustrative and non-medical only.
