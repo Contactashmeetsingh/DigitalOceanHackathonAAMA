@@ -1,16 +1,15 @@
 # Submission and demo checklist
 
-Local product checks were last rerun on 2026-07-11. DigitalOcean and publishing
-checks remain intentionally open until the separate deployment handoff.
+Local product checks were last rerun on 2026-07-11. DigitalOcean retrieval and
+publishing checks remain intentionally open until the final targeted index.
 
 ## Local product
 
-- [ ] Container build succeeds after the Vite source rename to
+- [x] Docker packaging follows the Vite source rename to
       `aman_frontend/`, while Flask still receives `/app/frontend/dist`.
-- [ ] YC-inspired four-surface shell renders overview, trait network, 3D globe,
-      and research workspace at desktop and mobile widths. Desktop production-
-      build structure/controls and the rebuilt WebGL fallback pass automated
-      checks; mobile browser verification remains.
+- [x] The sole `aman_frontend/` app renders the overview, real reference-distance
+      and Earth instrument, report, and research workspace in the Google-color
+      theme at 1440px and a responsive 500px viewport.
 - [x] Backend endpoints for the trait-network (`/api/comparison-cohort`) and
       globe (`/api/population-map`) surfaces are implemented and return a
       mandatory `disclaimer`/`citations` payload.
@@ -21,7 +20,8 @@ checks remain intentionally open until the separate deployment handoff.
 - [x] Frontend/backend integration contract is documented and locally checked,
       including the `/api/comparison-cohort` and `/api/population-map`
       endpoint specs for the trait-network and 3D globe surfaces.
-- [x] Full Python test suite passes (96 tests, including new coverage for
+- [x] Full Python test suite passes (104 tests, including deployment-artifact,
+      current 23andMe header, reference-panel,
       `backend/comparison.py`, `backend/population_map.py`, and their routes).
 - [x] React production build passes.
 - [x] A valid PGP 23andMe export produces the complete guided report.
@@ -44,7 +44,8 @@ checks remain intentionally open until the separate deployment handoff.
 - [x] Validate the App Platform specification with an authenticated account.
 - [x] Set runtime secret entries in App Platform, never in Git.
 - [ ] Verify the agent model, system prompt, and Sensitive-Data guardrail.
-- [ ] Create/select the Knowledge Base, index sources, and attach it to the agent.
+- [x] Create the managed Knowledge Base and attach it to the deployed agent.
+- [ ] Complete the crawler-safe evidence-dossier index.
 - [ ] Confirm retrieval contains source records for the prepared demo prompt.
 - [ ] Confirm the live application renders retrieved citations.
 - [x] Confirm serverless fallback behavior if the agent path is intentionally used.

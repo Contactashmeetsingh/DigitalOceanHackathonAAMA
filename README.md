@@ -10,8 +10,9 @@ Built for **AI for Social Good — Hack with MLH & DigitalOcean** (SF, Jul 10–
 and designed for deployment on the **DigitalOcean Gradient AI Platform**. The
 local guided-report product is complete and the App Platform frontend is live at
 **[jellyfish-app-jbnoq.ondigitalocean.app](https://jellyfish-app-jbnoq.ondigitalocean.app)**.
-The separately owned Gradient AI agent, Knowledge Base, guardrail, and
-retrieval-citation checks are still not claimed as verified below.
+The Gradient AI agent and managed Knowledge Base are provisioned and attached;
+the remaining retrieval-citation checks are listed explicitly below and are not
+claimed as complete until the final targeted index succeeds.
 
 ## Active collaboration protocol
 
@@ -49,7 +50,40 @@ repository.
 - [x] Frontend production release path confirmed: `origin/main` → App Platform.
 - [x] Scoped-push rule recorded; another owner's dirty work will not be bundled.
 
+## Remaining release steps
+
+The application implementation is complete. These are the only open production
+and submission checks after the Google-color release:
+
+1. Run `scripts/create_kb.sh --index` after the crawler-safe evidence dossier is
+   visible on `main`, then use `--status` until the targeted dossier and
+   ScienceDirect job finishes successfully. Older NCBI/Europe PMC crawler entries
+   may remain as documented failed inputs; do not count them as indexed evidence.
+2. Ask all six vetted research questions against the deployed agent and confirm
+   `answer_mode=agent_rag`, retrieval URLs, and visible Pillar 3 citations. Keep
+   the amber ungrounded warning if any category returns no retrieval citation.
+3. Repeat the live approved-PGP upload after App Platform activates this release;
+   require `genetic_closeness.status=available`, 26 population rows, the
+   deterministic report, and the default-deny boundaries.
+4. Record the final App Platform deployment ID/commit, capture final desktop and
+   mobile screenshots, and complete the Devpost video/team-credit fields.
+
+DigitalOcean currently grants presigned PDF uploads but rejects the documented
+file-data-source object with HTTP 400. The staged PDFs are not claimed as
+ingested; the source-linked crawler-safe dossier is the supported retrieval path.
+
 ## Iteration log
+
+- **2026-07-11 — Single-frontend Google-color release (completed locally):**
+  Removed the redundant generated `frontend/` tree so `aman_frontend/` is the
+  sole Vite source. Replaced the black/purple presentation with a light
+  Material-style system using Google blue (`#4285F4`), red (`#EA4335`), yellow
+  (`#FBBC04`), and green (`#34A853`), including the real distance/Earth
+  instrument, report, research room, focus states, warnings, and fallback graph
+  palette. Desktop 1440px and responsive 500px headless-browser checks pass;
+  all 24 frontend tests, 104 Python tests, the Vite production build, and
+  `git diff --check` pass. App Platform activation and the live valid-upload
+  replay remain in the release steps above.
 
 - **2026-07-11 — Concurrent frontend-directory rename recovery (in
   progress):** A concurrently pushed commit renamed the Vite source from
@@ -160,7 +194,7 @@ repository.
   source URLs, show the citation count inline, and display an amber verification
   warning when no retrieval citations return. The full suite now passes with 86
   Python tests, seven frontend tests, and a clean production build.
-- **2026-07-11 — Managed genetics-literacy RAG corpus (in progress):** Created
+- **2026-07-11 — Managed genetics-literacy RAG corpus (partially verified):** Created
   `genetics-literacy-kb` in `tor1` with a DO-managed OpenSearch database and the
   GTE Large EN v1.5 embedding model; attached eight open full-text population-
   genetics sources and connected the KB to the deployed Gradient agent. Added
@@ -172,8 +206,10 @@ repository.
   control plane and is recorded as a visible limitation rather than reported as
   ingested. The first crawler job was partial: ScienceDirect indexed, while all
   seven NCBI PMC URLs failed without API error detail. The manifest now uses
-  Europe PMC open-full-text mirrors and indexing targets only current-manifest
-  UUIDs; a clean final pass remains required.
+  Europe PMC open-full-text mirrors also returned not-updated. Added a
+  crawler-safe, source-linked evidence dossier on `main` and narrowed targeted
+  indexing to that dossier plus the publisher-hosted ScienceDirect source; the
+  final targeted index and six-category citation replay remain required.
 - **2026-07-11 — DigitalOcean credential verifier (started):** Validate and
   publish the standalone four-check diagnostic for serverless inference,
   control-plane Knowledge Bases, deployed-agent RAG evidence, and credential
@@ -221,7 +257,7 @@ repository.
   allowlisted measured/missing traits with evidence links, default-deny and
   honesty boundaries, reference-panel context, and dated studies with official
   status and consent/privacy links. Partial-response fallbacks, keyboard focus,
-  reduced motion, dark mode, forced colors, and responsive layouts are preserved;
+  reduced motion, forced colors, and responsive layouts are preserved;
   the Vite production build passes.
 - **2026-07-11 — Strict parser and real-PGP validation (completed):** Production
   uploads now require the recognizable 23andMe signature and canonical columns;
@@ -539,12 +575,12 @@ npm run build                  # -> aman_frontend/dist; Docker copies it to /app
 
 ### Local product — complete
 
-- [ ] Four-surface frontend redesign is implemented and visually verified at
-      desktop and mobile widths.
-- [ ] App Platform Docker build follows the `aman_frontend/` source rename and
+- [x] Three-pillar frontend redesign is implemented and visually verified at
+      desktop and responsive mobile widths in the Google-color theme.
+- [x] The Dockerfile follows the `aman_frontend/` source rename and
       still places the production bundle at Flask's `/app/frontend/dist` path.
-- [ ] Report-grounded comparison and population-map responses render their
-      backend-provided disclaimers/citations and retain safe preview fallbacks.
+- [x] The real 1000 Genomes distance and Earth views render their aggregate
+      source metadata, caveats, sample counts, and shared selection state.
 - [x] Frontend/backend integration contract documents current endpoints and
       clearly separates live behavior from planned aggregate visualization data.
 - Strict 23andMe text validation with exact call/no-call, malformed, duplicate,
@@ -566,7 +602,7 @@ npm run build                  # -> aman_frontend/dist; Docker copies it to /app
   Pakistani subset, unassigned count, methodology caveat, and integrity tests.
 - Dated research bridge with participation, status, consent/privacy context, and
   official sources.
-- Real open-consent PGP v3/v4/v5 API validation, 96 Python tests, four Node
+- Real open-consent PGP v3/v4/v5 API validation, 104 Python tests, 24 Node
   data/interaction tests, a successful production build, and local visual QA.
 - [x] `/api/comparison-cohort` (synthetic, cited cohort graph) and
       `/api/population-map` (real, cited reference populations) backend
@@ -577,7 +613,9 @@ npm run build                  # -> aman_frontend/dist; Docker copies it to /app
 
 The App Platform frontend is live at
 [jellyfish-app-jbnoq.ondigitalocean.app](https://jellyfish-app-jbnoq.ondigitalocean.app)
-from active deployment `1f630e84-5642-4bd6-860f-c958efe1270b` (commit `b0272fd`).
+from last verified deployment `1f630e84-5642-4bd6-860f-c958efe1270b`
+(commit `b0272fd`) with deploy-on-push from `origin/main`. The Google-color
+deployment ID and final visual smoke check remain in the release steps above.
 The prepared local artifacts for remaining AI work are `.env.example`,
 `agent/system_prompt.md`, `data/kb_sources/`, `scripts/create_kb.sh`,
 `evals/agent_behavior.jsonl`, and `scripts/run_evals.sh`.
@@ -586,13 +624,15 @@ The prepared local artifacts for remaining AI work are `.env.example`,
 - [x] Validate the App Platform spec and configure its runtime secret entries.
 - [x] Deploy the current repository revision and record the live URL/revision.
 - [ ] Create or select the agent; verify its model, prompt, and guardrail settings.
-- [ ] Create/select the Knowledge Base, index the prepared sources, attach it,
-      and verify retrieval on the demo prompts.
+- [x] Create the managed `genetics-literacy-kb` and attach it to the deployed
+      Gradient agent.
+- [ ] Finish the targeted evidence-dossier index and verify retrieval on all six
+      demo prompts.
 - [x] Finish and test the optional `backend/gradient_client.py` agent response
       and retrieval-citation mapping before advertising model-generated answers.
       Agent-path 400 (system/developer messages rejected) root-caused, fixed,
       tested, and deployed live 2026-07-11; see Iteration log. Real retrieval
-      citations still depend on the (currently empty) Knowledge Base below.
+      citations still depend on the final targeted Knowledge Base index.
 - [x] Run live homepage, `/health`, and no-file invalid-upload smoke checks.
 - [x] Run a live valid-upload test with an approved open-consent PGP file, then
       test citations, default-deny refusal, and fallback behavior. Start a
