@@ -25,8 +25,8 @@ function StaticNetwork({ categories }) {
     <svg viewBox="0 0 860 570" role="presentation">
       <defs>
         <radialGradient id="network-fallback-glow">
-          <stop offset="0" stopColor="#a978ff" stopOpacity=".26" />
-          <stop offset="1" stopColor="#a978ff" stopOpacity="0" />
+          <stop offset="0" stopColor="#4285f4" stopOpacity=".26" />
+          <stop offset="1" stopColor="#4285f4" stopOpacity="0" />
         </radialGradient>
       </defs>
       <circle cx={center.x} cy={center.y} r="165" fill="url(#network-fallback-glow)" />
@@ -144,7 +144,7 @@ export default function TraitNetwork({ reportData, cohortData = null, dataStatus
         graph = new ForceGraph3D(element, { controlType: "orbit" })
           .width(Math.max(320, element.clientWidth))
           .height(Math.max(420, element.clientHeight))
-          .backgroundColor("#05060b")
+          .backgroundColor("#f8f9fa")
           .showNavInfo(false)
           .graphData(graphData)
           .nodeId("id")

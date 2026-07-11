@@ -1,61 +1,61 @@
-const ANCHOR_COLOR = "#F8FAFC";
-const PEER_LINK_COLOR = "#334155";
+const ANCHOR_COLOR = "#4285F4";
+const PEER_LINK_COLOR = "#BDC1C6";
 const PROFILE_COUNT = 128;
 const DEMO_PROFILE_ID = "synthetic-demo-profile";
 
 const COHORT_GROUPS = Object.freeze({
-  european: { label: "European reference model", color: "#A78BFA" },
-  african: { label: "African reference model", color: "#FBBF24" },
-  hispanic_latino: { label: "Admixed American reference model", color: "#FB7185" },
-  east_asian: { label: "East Asian reference model", color: "#38BDF8" },
-  south_asian: { label: "South Asian reference model", color: "#34D399" },
-  southeast_asian: { label: "Southeast Asian reference model", color: "#22D3EE" },
-  middle_eastern_north_african: { label: "Middle Eastern / North African model", color: "#F97316" },
-  indigenous_american: { label: "Indigenous American reference model", color: "#E879F9" },
-  pacific_islander: { label: "Pacific Islander reference model", color: "#60A5FA" },
-  unspecified: { label: "Unspecified reference model", color: "#94A3B8" },
+  european: { label: "European reference model", color: "#4285F4" },
+  african: { label: "African reference model", color: "#FBBC04" },
+  hispanic_latino: { label: "Admixed American reference model", color: "#EA4335" },
+  east_asian: { label: "East Asian reference model", color: "#34A853" },
+  south_asian: { label: "South Asian reference model", color: "#1967D2" },
+  southeast_asian: { label: "Southeast Asian reference model", color: "#188038" },
+  middle_eastern_north_african: { label: "Middle Eastern / North African model", color: "#D93025" },
+  indigenous_american: { label: "Indigenous American reference model", color: "#F9AB00" },
+  pacific_islander: { label: "Pacific Islander reference model", color: "#669DF6" },
+  unspecified: { label: "Unspecified reference model", color: "#9AA0A6" },
 });
 
 const TRAIT_DEFINITIONS = [
   {
     id: "lactase",
     label: "Lactase persistence",
-    color: "#38BDF8",
+    color: "#4285F4",
     reportIds: ["rs4988235"],
     keywords: ["lactase"],
   },
   {
     id: "earwax",
     label: "Earwax type",
-    color: "#A78BFA",
+    color: "#EA4335",
     reportIds: ["rs17822931"],
     keywords: ["earwax"],
   },
   {
     id: "bitter-taste",
     label: "Bitter-taste perception",
-    color: "#F472B6",
+    color: "#FBBC04",
     reportIds: ["rs713598", "rs1726866", "rs10246939"],
     keywords: ["tas2r38", "bitter-taste", "bitter taste"],
   },
   {
     id: "photic-sneeze",
     label: "Photic sneeze reflex",
-    color: "#FBBF24",
+    color: "#34A853",
     reportIds: ["rs10427255"],
     keywords: ["photic sneeze"],
   },
   {
     id: "actn3",
     label: "ACTN3 protein production",
-    color: "#34D399",
+    color: "#1967D2",
     reportIds: ["rs1815739"],
     keywords: ["actn3", "alpha-actinin-3"],
   },
   {
     id: "cilantro",
     label: "Cilantro taste perception",
-    color: "#FB7185",
+    color: "#D93025",
     reportIds: ["rs72921001"],
     keywords: ["cilantro"],
   },
@@ -472,7 +472,7 @@ export const DEMO_GLOBE = Object.freeze({
         lat: 54.5,
         lng: -3.5,
         percentage: 22,
-        color: "#A78BFA",
+        color: "#4285F4",
         context: "An illustrative family-context region supplied by the demo profile.",
       },
       {
@@ -481,7 +481,7 @@ export const DEMO_GLOBE = Object.freeze({
         lat: 50.5,
         lng: 10.5,
         percentage: 18,
-        color: "#38BDF8",
+        color: "#EA4335",
         context: "A broad demo region that is intentionally separate from residence.",
       },
       {
@@ -490,7 +490,7 @@ export const DEMO_GLOBE = Object.freeze({
         lat: 22.5,
         lng: 78.5,
         percentage: 20,
-        color: "#F472B6",
+        color: "#FBBC04",
         context: "A broad user-declared context label, not a precise community claim.",
       },
       {
@@ -499,7 +499,7 @@ export const DEMO_GLOBE = Object.freeze({
         lat: 9.0,
         lng: -4.0,
         percentage: 14,
-        color: "#FBBF24",
+        color: "#34A853",
         context: "A broad illustrative context whose many populations are not interchangeable.",
       },
       {
@@ -508,7 +508,7 @@ export const DEMO_GLOBE = Object.freeze({
         lat: 35.0,
         lng: 105.0,
         percentage: 13,
-        color: "#34D399",
+        color: "#1967D2",
         context: "An illustrative broad region supplied by the synthetic demo profile.",
       },
       {
@@ -517,7 +517,7 @@ export const DEMO_GLOBE = Object.freeze({
         lat: 15.0,
         lng: -75.0,
         percentage: 13,
-        color: "#FB7185",
+        color: "#D93025",
         context: "A deliberately broad demo region, not an Indigenous identity assignment.",
       },
     ].map((region) =>

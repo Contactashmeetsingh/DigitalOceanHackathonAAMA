@@ -551,7 +551,7 @@ function GeneticClosenessMap({ populations, available, selectedCode, onSelect, m
         }}
       >
         <defs>
-          <radialGradient id="user-point"><stop offset="0" stopColor="#e7fbff" /><stop offset="0.35" stopColor="#39d0ff" /><stop offset="1" stopColor="#087aa0" /></radialGradient>
+          <radialGradient id="user-point"><stop offset="0" stopColor="#ffffff" /><stop offset="0.35" stopColor="#4285f4" /><stop offset="1" stopColor="#174ea6" /></radialGradient>
           <filter id="user-glow"><feGaussianBlur stdDeviation="5" /></filter>
         </defs>
         <g className="orbit-grid" aria-hidden="true">

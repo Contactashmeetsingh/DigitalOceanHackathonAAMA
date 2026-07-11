@@ -4,7 +4,7 @@ Only the caller-supplied ``report`` (the JSON already returned by
 ``build_guided_report``) is used as context — never a raw uploaded file — so a
 client cannot smuggle off-allowlist genotype data into the model prompt. The
 six category ids and questions mirror ``ANSWER_CATEGORIES`` in
-frontend/src/App.jsx; the canonical question text lives here, not on the
+aman_frontend/src/App.jsx; the canonical question text lives here, not on the
 client, so a request can only ever ask one of these six vetted questions.
 """
 from __future__ import annotations

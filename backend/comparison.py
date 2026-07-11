@@ -25,7 +25,7 @@ DEFAULT_COHORT_SIZE = 120
 
 # Illustrative cohort-composition shares. Anchored to the cited TOPMed r2
 # reference-panel breakdown (Taliun et al., Nature 2021 — see
-# frontend/src/referencePanelData.js) for the five groups it reports; the
+# aman_frontend/src/referencePanelData.js) for the five groups it reports; the
 # remaining ancestry.py buckets are given a small, explicitly-illustrative
 # share so every canonical population key is representable in the demo.
 # These are cohort-visualization weights, not a claim about global population
