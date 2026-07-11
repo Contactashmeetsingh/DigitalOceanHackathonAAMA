@@ -5,6 +5,11 @@ open full text and direct evidence about reference-panel representation and
 imputation accuracy. Broad population labels are navigation aids, not claims
 that any population is homogeneous.
 
+`population_genetics_evidence.md` is the crawler-safe retrieval dossier. It
+records publication dates, purpose, bounded factual summaries, and direct links
+to every paper below. It exists because NCBI and Europe PMC returned failed or
+not-updated status to the managed crawler; it does not replace the papers.
+
 ## DigitalOcean database and genomic reference foundation
 
 - **DigitalOcean Managed OpenSearch database** — the KB's `database_id`, not a

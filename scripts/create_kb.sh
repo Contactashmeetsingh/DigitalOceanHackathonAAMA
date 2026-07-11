@@ -14,6 +14,7 @@ KB_EMBEDDING_MODEL_UUID="${KB_EMBEDDING_MODEL_UUID:-22653204-79ed-11ef-bf8f-4e01
 
 # label|URL — all use section-based chunking for clean HTML full text.
 WEB_SOURCES=(
+  "Curated population genetics evidence dossier|https://raw.githubusercontent.com/Contactashmeetsingh/DigitalOceanHackathonAAMA/main/data/kb_sources/population_genetics_evidence.md"
   "1000 Genomes global reference|https://europepmc.org/articles/PMC4750478"
   "Diversity gap and research ethics|https://europepmc.org/articles/PMC11770215"
   "Ancestrally matched Thai imputation|https://europepmc.org/articles/PMC10390539"
@@ -24,6 +25,13 @@ WEB_SOURCES=(
   "Native American imputation panel|https://europepmc.org/articles/PMC8762266"
   "Qatar Genome Arab haplotype panel|https://europepmc.org/articles/PMC8511259"
   "GLAD admixed Latin American resource|https://europepmc.org/articles/PMC11605695"
+)
+
+# These URLs are verified crawler inputs. The dossier preserves direct article
+# links and evidence boundaries; ScienceDirect supplies publisher-hosted text.
+INDEX_SOURCE_URLS=(
+  "https://raw.githubusercontent.com/Contactashmeetsingh/DigitalOceanHackathonAAMA/main/data/kb_sources/population_genetics_evidence.md"
+  "https://www.sciencedirect.com/science/article/pii/S2666979X23001003"
 )
 
 # filename|label|URL — stage these for console file upload with semantic chunks.
@@ -236,11 +244,7 @@ start_indexing() {
     -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
     -H "Accept: application/json" \
     "$API_BASE/knowledge_bases/$kb_uuid/data_sources")"
-  local manifest_urls=()
-  for entry in "${WEB_SOURCES[@]}"; do
-    IFS='|' read -r label url <<<"$entry"
-    manifest_urls+=("$url")
-  done
+  local manifest_urls=("${INDEX_SOURCE_URLS[@]}")
   payload="$(printf '%s' "$sources" | python3 -c '
 import json
 import sys
