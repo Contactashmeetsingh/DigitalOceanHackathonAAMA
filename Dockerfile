@@ -1,9 +1,9 @@
 # --- Stage 1: build the React (Vite) frontend ---
 FROM node:20-slim AS frontend
 WORKDIR /frontend
-COPY frontend/package.json frontend/package-lock.json* ./
+COPY aman_frontend/package.json aman_frontend/package-lock.json* ./
 RUN npm install
-COPY frontend/ ./
+COPY aman_frontend/ ./
 RUN npm run build
 
 # --- Stage 2: Python runtime that serves the built app + API ---

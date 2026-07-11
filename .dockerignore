@@ -1,0 +1,17 @@
+.git
+.gitignore
+.pytest_cache
+.env
+.venv
+venv
+**/__pycache__
+**/*.pyc
+**/node_modules
+aman_frontend/dist
+aman_frontend/.claude
+aman_frontend/.codex
+aman_frontend/.cursor
+3d-force-graph
+20??-??-??-??????-*.txt
+data/samples/*.txt
+data/samples/*.csv

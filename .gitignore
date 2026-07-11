@@ -6,16 +6,18 @@
 # Real genome files are never committed (privacy + size)
 data/samples/*.txt
 data/samples/*.csv
+# Real genome exports must never sit loose at the repo root either
+/genome_*.txt
 # Local virtualenv
 venv/
 .venv/
 # Node / Vite frontend
 node_modules/
-frontend/dist/
+aman_frontend/dist/
 # AI coding-tool skill packages (local tooling, not project code)
-frontend/.claude/
-frontend/.codex/
-frontend/.cursor/
+aman_frontend/.claude/
+aman_frontend/.codex/
+aman_frontend/.cursor/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
