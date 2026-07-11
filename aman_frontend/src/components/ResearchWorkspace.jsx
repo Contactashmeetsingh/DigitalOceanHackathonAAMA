@@ -58,6 +58,7 @@ export default function ResearchWorkspace({ reportData }) {
           status: "ready",
           content: response.content || "The service returned an empty answer.",
           citations,
+          answerMode: response.answer_mode || "unknown",
         },
       }));
     } catch (error) {
@@ -168,7 +169,13 @@ export default function ResearchWorkspace({ reportData }) {
               <article className="message assistant-message answer-message">
                 <span className="message-avatar">AA</span>
                 <div>
-                  <p className="message-meta">Grounded response</p>
+                  <div className="answer-provenance">
+                    <p className="message-meta">Grounded response</p>
+                    <span className={current.answerMode === "agent_rag" ? "rag-mode live" : "rag-mode fallback"}>
+                      {current.answerMode === "agent_rag" ? "Agent · RAG" : "Serverless fallback"}
+                    </span>
+                    <span className="citation-count">{current.citations.length} retrieved source{current.citations.length === 1 ? "" : "s"}</span>
+                  </div>
                   <p className="answer-copy">{current.content}</p>
                   {current.citations.length ? (
                     <div className="citation-row" aria-label="Retrieved answer sources">
@@ -179,7 +186,7 @@ export default function ResearchWorkspace({ reportData }) {
                       ))}
                     </div>
                   ) : (
-                    <p className="citation-empty">No retrieval citations were returned for this answer.</p>
+                    <p className="citation-empty"><strong>Ungrounded answer:</strong> no retrieval citations were returned. Treat this as general model context, not knowledge-base evidence.</p>
                   )}
                 </div>
               </article>

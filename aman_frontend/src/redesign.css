@@ -737,10 +737,18 @@ body {
 .message-error .message-avatar { color: #170505; background: var(--danger); }
 .answer-message { max-width: 92%; }
 .answer-copy { color: #c2c0c8 !important; }
+.answer-provenance { display: flex; margin-bottom: 7px; align-items: center; flex-wrap: wrap; gap: 7px; }
+.answer-provenance .message-meta { margin: 0 auto 0 0 !important; }
+.rag-mode,
+.citation-count { padding: 4px 6px; font-size: .5rem; text-transform: uppercase; letter-spacing: .06em; border: 1px solid var(--line); border-radius: 999px; }
+.rag-mode.live { color: var(--success); background: rgb(101 225 173 / 6%); border-color: rgb(101 225 173 / 20%); }
+.rag-mode.fallback { color: #e7bb72; background: rgb(231 187 114 / 6%); border-color: rgb(231 187 114 / 20%); }
+.citation-count { color: #777681; }
 .citation-row { display: flex; margin-top: 12px; flex-wrap: wrap; gap: 6px; }
 .citation-row a { padding: 6px 8px; color: #bca5ea; font-size: .58rem; text-decoration: none; background: rgb(169 120 255 / 7%); border: 1px solid rgb(169 120 255 / 16%); border-radius: 6px; }
 .citation-row a span { margin-right: 5px; }
-.citation-empty { margin-top: 12px !important; padding-top: 9px; color: #898793 !important; font-size: .6rem !important; border-top: 1px solid var(--line); }
+.citation-empty { margin-top: 12px !important; padding: 9px 10px; color: #9d8666 !important; font-size: .58rem !important; background: rgb(231 187 114 / 5%); border: 1px solid rgb(231 187 114 / 14%); border-radius: 6px; }
+.citation-empty strong { color: #ddb674; }
 .chat-composer { padding: 15px 19px 17px; background: #0d0e14; border-top: 1px solid var(--line); }
 .chat-composer > label { display: block; margin-bottom: 7px; color: #898793; font-size: .58rem; text-transform: uppercase; letter-spacing: .07em; }
 .composer-row { display: grid; grid-template-columns: 1fr auto; gap: 9px; }
