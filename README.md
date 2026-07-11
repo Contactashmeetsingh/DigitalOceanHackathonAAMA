@@ -273,6 +273,18 @@ repository.
   Bases, so live retrieval citations may still be sparse/empty until a KB is
   provisioned and attached — that's a DigitalOcean-console provisioning task,
   not a code fix, and is tracked below.
+- **2026-07-11 — Live verification of the agent-path fix (completed):**
+  Deployed commit `cca2fc4` (deployment `7a578d01`), confirmed ACTIVE, then
+  hit live `POST /api/narrative` twice. First call fell back to serverless
+  (agent leg hit a 90s read timeout — logged, not an error, by design).
+  Second call completed via the **agent path directly, no fallback**, in
+  ~81s, HTTP 200, well-formed grounded answer, `citations: []` (expected —
+  no KB attached yet, see gap above). **Demo-day latency risk:** 81s is
+  close to our 90s agent read-timeout / 120s gunicorn timeout; the frontend
+  has no explicit fetch timeout so it will wait, but expect the live agent
+  answer to sometimes take 60–90s and occasionally silently fall back to the
+  faster, uncited serverless path. This is graceful (never a hard failure)
+  but worth knowing before presenting live.
 
 ## Hard boundaries (by design, not just policy)
 - No ancestry inference — interpretation only.
