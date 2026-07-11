@@ -56,6 +56,11 @@ def explain(messages: list[dict]) -> dict:
 
 
 def _via_agent(messages: list[dict]) -> dict:
+    # The agent rejects system/developer turns outright ("agent instructions
+    # are set via agent configuration", HTTP 400) — its own console-configured
+    # instructions apply instead. The user turn already carries the question
+    # and the safe report context, so it's the only turn the agent needs.
+    agent_messages = [message for message in messages if message.get("role") not in ("system", "developer")]
     try:
         resp = requests.post(
             f"{AGENT_ENDPOINT}/api/v1/chat/completions?agent=true",
@@ -65,7 +70,7 @@ def _via_agent(messages: list[dict]) -> dict:
                 "Content-Type": "application/json",
             },
             json={
-                "messages": messages,
+                "messages": agent_messages,
                 "stream": False,
                 "include_retrieval_info": True,
             },

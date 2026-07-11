@@ -52,3 +52,36 @@ def test_explain_uses_agent_path_directly_when_it_succeeds(monkeypatch):
     result = gradient_client.explain([{"role": "user", "content": "hi"}])
 
     assert result["content"] == "Grounded agent answer."
+
+
+def test_via_agent_strips_system_and_developer_messages_before_posting(monkeypatch):
+    monkeypatch.setattr(gradient_client, "AGENT_ENDPOINT", "https://example.agents.do-ai.run")
+    monkeypatch.setattr(gradient_client, "AGENT_ACCESS_KEY", "a-working-key")
+
+    captured = {}
+
+    class FakeResponse:
+        ok = True
+
+        @staticmethod
+        def json():
+            return {"choices": [{"message": {"content": "Grounded agent answer."}}]}
+
+    def fake_post(url, headers, json, timeout):
+        captured["url"] = url
+        captured["json"] = json
+        return FakeResponse()
+
+    monkeypatch.setattr(gradient_client.requests, "post", fake_post)
+
+    messages = [
+        {"role": "system", "content": "boundary instructions"},
+        {"role": "developer", "content": "dev instructions"},
+        {"role": "user", "content": "What does my result mean?"},
+    ]
+
+    result = gradient_client._via_agent(messages)
+
+    assert captured["url"] == "https://example.agents.do-ai.run/api/v1/chat/completions?agent=true"
+    assert captured["json"]["messages"] == [{"role": "user", "content": "What does my result mean?"}]
+    assert result["content"] == "Grounded agent answer."

@@ -28,6 +28,15 @@ repository.
 - **Backend/DigitalOcean owner (separate coding agent):** Owns API behavior,
   parsing/report logic, Gradient AI, Knowledge Base, credentials, App Platform,
   and live deployment.
+- **Frontend release path:** The production App Platform app deploys from
+  `origin/main` on GitHub (`deploy_on_push: true`); there is no separate frontend
+  branch. After a frontend change is verified, Codex must scope the diff to
+  frontend-owned files and required documentation, commit and push it to `main`,
+  then record the commit SHA, live URL, and smoke-check result here.
+- **Never bundle another owner's work:** Do not push an uncommitted/staged
+  backend or DigitalOcean change with a frontend release. Coordinate first or
+  isolate it in its own commit/worktree so App Platform deploys only reviewed
+  work.
 - **Respect boundaries:** Read the latest status before editing shared contracts;
   preserve the other owner's changes and record cross-team dependencies rather
   than silently overwriting them.
@@ -37,6 +46,8 @@ repository.
 - [x] README reviewed before work.
 - [x] Frontend and backend/DigitalOcean ownership documented.
 - [x] Ongoing README update/checklist rule recorded for both agents.
+- [x] Frontend production release path confirmed: `origin/main` → App Platform.
+- [x] Scoped-push rule recorded; another owner's dirty work will not be bundled.
 
 ## Iteration log
 
@@ -220,6 +231,12 @@ repository.
   owner. Both owners must read this README before each new request and record
   every change, verification result, completion, and blocker here so the shared
   repository state stays visible.
+- **2026-07-11 — Frontend release discipline (completed):** Confirmed that the
+  App Platform production path is GitHub `origin/main` with deploy-on-push, not a
+  separate frontend branch. Frontend releases must be verified, scoped to
+  frontend-owned files plus documentation, committed/pushed to `main`, and then
+  recorded with a live smoke check. The current dirty
+  `backend/gradient_client.py` file remains excluded from frontend publishing.
 - **2026-07-11 — Official App Platform frontend launch (completed):** Verified
   the active `ancestry-audit-layer` App Platform deployment for commit
   `2de758b26b203b67da134206e583507ad7fd96be` at
@@ -228,6 +245,34 @@ repository.
   returned `200 {"status":"ok"}`; and an empty `/api/analyze` request returned
   the expected no-store `400 missing_file` JSON response. No genome file or
   other sensitive personal data was sent during this smoke test.
+- **2026-07-11 — Backend: live agent-path 400 root-caused and fixed
+  (completed):** `/api/narrative` was returning a DO edge 5xx in production.
+  Root-caused end-to-end by live-tailing `doctl apps logs`: (1) added an
+  agent→serverless fallback in `gradient_client.explain()` so one bad path
+  doesn't fail the whole feature; (2) fixed `_via_agent()` to POST to
+  `.../api/v1/chat/completions?agent=true` (bare path does not route to the
+  agent/RAG handler — confirmed against `scripts/verify_do.py`'s live FULL
+  PASS run); (3) fixed `_via_serverless()`, which was crashing with
+  `TypeError: Client.__init__() got an unexpected keyword argument 'proxies'`
+  (openai 1.51.0's default client construction is incompatible with newer
+  httpx) by passing an explicit `http_client=DefaultHttpxClient(...)`, the
+  same workaround already proven in `verify_do.py`; (4) added stderr logging
+  on agent-path failure, which surfaced the true final blocker: the DO agent
+  API hard-rejects any `system`/`developer` role message
+  (`"system and developer messages are not allowed; agent instructions are
+  set via agent configuration"`, HTTP 400) because agent instructions are
+  configured server-side in the console, not per-request. Fixed `_via_agent()`
+  to strip system/developer turns before sending (the user turn already
+  carries the question and safe report context); `_via_serverless()` is
+  unchanged and still sends the full message list, since serverless
+  completions have no server-side agent config to conflict with. Added
+  `tests/test_gradient_client.py::test_via_agent_strips_system_and_developer_messages_before_posting`
+  and 2 other fallback-behavior tests; full suite (82 tests) passes. Deployed
+  to `origin/main` and verified live. **Known remaining gap:**
+  `scripts/verify_do.py`'s control-plane check found zero visible Knowledge
+  Bases, so live retrieval citations may still be sparse/empty until a KB is
+  provisioned and attached — that's a DigitalOcean-console provisioning task,
+  not a code fix, and is tracked below.
 
 ## Hard boundaries (by design, not just policy)
 - No ancestry inference — interpretation only.
@@ -307,8 +352,11 @@ The prepared local artifacts for remaining AI work are `.env.example`,
 - [ ] Create or select the agent; verify its model, prompt, and guardrail settings.
 - [ ] Create/select the Knowledge Base, index the prepared sources, attach it,
       and verify retrieval on the demo prompts.
-- [ ] Finish and test the optional `backend/gradient_client.py` agent response
+- [x] Finish and test the optional `backend/gradient_client.py` agent response
       and retrieval-citation mapping before advertising model-generated answers.
+      Agent-path 400 (system/developer messages rejected) root-caused, fixed,
+      tested, and deployed live 2026-07-11; see Iteration log. Real retrieval
+      citations still depend on the (currently empty) Knowledge Base below.
 - [x] Run live homepage, `/health`, and no-file invalid-upload smoke checks.
 - [ ] Run a live valid-upload test with an approved open-consent PGP file, then
       test citations, default-deny refusal, and fallback behavior. Start a
