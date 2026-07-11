@@ -1,10 +1,12 @@
 """Gradient AI agent client with a serverless-inference fallback.
 
 Two paths, one function:
-  1. Agent (RAG) — POST $GRADIENT_AGENT_ENDPOINT/api/v1/chat/completions with
-     Bearer AGENT_ACCESS_KEY and body flags include_retrieval_info /
+  1. Agent (RAG) — POST $GRADIENT_AGENT_ENDPOINT/api/v1/chat/completions?agent=true
+     with Bearer AGENT_ACCESS_KEY and body flags include_retrieval_info /
      include_guardrails_info / include_functions_info to get citations back.
-     Use the /api/v1/ form (no `?agent=true`) — do not mix endpoint forms.
+     The `?agent=true` form is required — `scripts/verify_do.py` confirmed it
+     live (FULL PASS with retrieval/citation evidence) against the deployed
+     agent; the bare path without it does not route to the agent/RAG handler.
   2. Fallback — if GRADIENT_AGENT_ENDPOINT is unset, call serverless inference
      (https://inference.do-ai.run/v1/, OpenAI-compatible) with
      DIGITAL_OCEAN_MODEL_ACCESS_KEY, so the app runs before the KB/agent exists.
@@ -54,7 +56,7 @@ def explain(messages: list[dict]) -> dict:
 def _via_agent(messages: list[dict]) -> dict:
     try:
         resp = requests.post(
-            f"{AGENT_ENDPOINT}/api/v1/chat/completions",
+            f"{AGENT_ENDPOINT}/api/v1/chat/completions?agent=true",
             headers={"Authorization": f"Bearer {AGENT_ACCESS_KEY}"},
             json={
                 "messages": messages,
