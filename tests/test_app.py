@@ -7,6 +7,8 @@ import pytest
 from werkzeug.datastructures import MultiDict
 
 from backend.app import MAX_UPLOAD_BYTES, app
+from backend.reference_panel import reference_rsids
+from backend.traits import ALLOWLIST
 from backend.upload_request import InMemoryUploadRequest
 
 
@@ -59,7 +61,7 @@ def test_complete_guided_report_contract_and_privacy(client):
     assert data["stats"]["called"] == 3
     assert data["retention"] == {
         "mode": "selected",
-        "requested_rsids": 8,
+        "requested_rsids": len(reference_rsids() | set(ALLOWLIST)),
         "retained_rsids": 2,
         "duplicate_conflict_scope": "retained_records",
     }
@@ -76,6 +78,7 @@ def test_complete_guided_report_contract_and_privacy(client):
     assert data["boundaries"]["requested_checks"][1]["rsid"] == "rs429358"
     assert data["boundaries"]["requested_checks"][1]["refused"] is True
     assert data["studies"]["items"]
+    assert data["genetic_closeness"]["status"] == "insufficient_overlap"
 
     serialized = json.dumps(data)
     assert "rs999999999" not in serialized

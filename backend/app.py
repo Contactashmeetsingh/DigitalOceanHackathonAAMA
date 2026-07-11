@@ -18,6 +18,7 @@ from backend.comparison import build_comparison_graph
 from backend.narrative import CATEGORY_QUESTIONS, build_messages
 from backend.parser import ParseError, parse_23andme
 from backend.population_map import build_population_map
+from backend.reference_panel import build_closeness, reference_rsids
 from backend.report import build_guided_report
 from backend.traits import ALLOWLIST
 from backend.upload_request import InMemoryUploadRequest
@@ -116,7 +117,7 @@ def analyze():
         parsed = parse_23andme(
             text,
             require_vendor_header=True,
-            retain_rsids=ALLOWLIST,
+            retain_rsids=set(ALLOWLIST) | reference_rsids(),
         )
     except ParseError as error:
         return jsonify(error.to_dict()), 400
@@ -130,6 +131,7 @@ def analyze():
         population_label,
         requested_rsids=requested_rsids or None,
     )
+    genetic_closeness = build_closeness(parsed)
 
     safe_filename = secure_filename(uploaded.filename) or "genome.txt"
 
@@ -141,6 +143,7 @@ def analyze():
             "reference_build": parsed["reference_build"],
             "stats": parsed["stats"],
             "retention": parsed["retention"],
+            "genetic_closeness": genetic_closeness,
             **guided_report,
         }
     )

@@ -129,6 +129,16 @@ repository.
   superpopulation agreement with all 20,000 selected markers and 99.28% over
   the 2,841-marker open-consent v4-chip overlap; this is validation of the
   aggregate distance instrument, not authorization to infer a user's identity.
+- **2026-07-11 — Privacy-safe closeness API (completed):** Added lazy loading of
+  the compact Phase 3 reference, selected-marker retention, GRCh37 allele
+  compatibility checks, and deterministic RMS allele-frequency distances for
+  all 26 reference populations. The API returns only aggregate distances,
+  overlap/mismatch counts, exact reference sample sizes, source-description map
+  anchors, and explicit non-ancestry caveats; it returns no panel marker list or
+  uploaded genotypes. Missing data, the wrong build, or fewer than 200 overlaps
+  fail closed without breaking the report. All 85 Python tests pass, and a real
+  open-consent v4 POST returned 2,836 compatible markers plus the existing six
+  traits, default-deny refusal, transparency reveal, and four matched studies.
 - **2026-07-11 — DigitalOcean credential verifier (started):** Validate and
   publish the standalone four-check diagnostic for serverless inference,
   control-plane Knowledge Bases, deployed-agent RAG evidence, and credential
