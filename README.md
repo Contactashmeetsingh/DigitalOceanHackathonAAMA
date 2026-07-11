@@ -533,6 +533,38 @@ ingested; the source-linked crawler-safe dossier is the supported retrieval path
   citations from the agent+Knowledge Base path (that remains a separate open
   item below). No raw genome bytes were logged or retained by this
   verification, and no billable evaluation was started.
+- **2026-07-11 — Trait network and Earth reference globe mounted into the app
+  (completed, this agent, by explicit user request):** Deep-diving the UI
+  changes pulled from Codex revealed `AncestryGlobe.jsx` and `TraitNetwork.jsx`
+  were fully built and covered by 24 passing frontend tests, and
+  `POST /api/comparison-cohort` / `POST /api/population-map` were already live
+  and correct, but `App.jsx` never imported or rendered either component — the
+  two surfaces were unreachable in production. The user explicitly authorized
+  this backend/DigitalOcean-owned agent to cross into `aman_frontend/` for this
+  one task rather than waiting on Codex. Fix: imported both components into
+  `App.jsx`; added report-grounded, abortable data fetching for both endpoints
+  (mirroring `ResearchWorkspace`'s abort/generation-guard pattern) that clears
+  and refetches whenever the analyzed report changes; rendered both surfaces
+  between the upload section and the research workspace so their existing
+  "01 · Trait space" / "02 · Reference context" kickers land in the intended
+  product order; added matching `#compare`/`#atlas` nav links. All 24 frontend
+  tests still pass; `npm run build` succeeds. Committed and pushed as
+  `d87b13e`, deployed as App Platform deployment `c163c596-66e2-4e57-823d-c3567d3fd80f`
+  (ACTIVE, superseding `e6d7693`). Live-verified end-to-end: confirmed the
+  live homepage serves the exact built bundle (`index-Sch3NTxR.js`, hash match
+  with the local build) containing both new section headings; analyzed the
+  approved open-consent PGP file
+  (`genome_Lorena_Sandoval_v5_Full_20260429131650.txt`) against the live app
+  (`genetic_closeness.status: available`); POSTed that exact live report to
+  both new endpoints — `/api/comparison-cohort` returned 121 nodes/120 links
+  with a disclaimer and 5 citations, `/api/population-map` returned 29
+  populations with a `you_marker` that only echoed the user-supplied
+  "European" label (never inferred) plus a disclaimer. **Not done:** no
+  browser-automation tool was available this session, so the actual WebGL/3D
+  canvas rendering (the force-graph and rotating globe) was not visually
+  screenshotted or interacted with in a real browser — a human or Codex visual
+  QA pass on the live `#compare`/`#atlas` sections is still recommended before
+  final submission.
 
 ## Hard boundaries (by design, not just policy)
 - No ancestry inference — interpretation only.
@@ -613,9 +645,10 @@ npm run build                  # -> aman_frontend/dist; Docker copies it to /app
 
 The App Platform frontend is live at
 [jellyfish-app-jbnoq.ondigitalocean.app](https://jellyfish-app-jbnoq.ondigitalocean.app)
-from last verified deployment `1f630e84-5642-4bd6-860f-c958efe1270b`
-(commit `b0272fd`) with deploy-on-push from `origin/main`. The Google-color
-deployment ID and final visual smoke check remain in the release steps above.
+from last verified deployment `c163c596-66e2-4e57-823d-c3567d3fd80f`
+(commit `d87b13e`, ACTIVE, superseding the Google-color release `e6d7693`)
+with deploy-on-push from `origin/main`. The final visual smoke check for the
+now-mounted trait-network/globe surfaces remains in the release steps above.
 The prepared local artifacts for remaining AI work are `.env.example`,
 `agent/system_prompt.md`, `data/kb_sources/`, `scripts/create_kb.sh`,
 `evals/agent_behavior.jsonl`, and `scripts/run_evals.sh`.
@@ -674,8 +707,15 @@ any bracketed Gradient AI claims must be filled only after their separate checks
       `docs/frontend-backend-contract.md`.
 - [x] Pytest coverage for both new modules and their Flask routes (14 new
       tests; 96 total).
-- [ ] Codex has implemented and visually verified all four frontend surfaces
-      against this contract (frontend-owned; tracked in Codex's own entries).
+- [x] All four planned frontend surfaces are implemented and mounted in
+      `App.jsx` (visual overhaul, `TraitNetwork` force-graph, `AncestryGlobe`
+      Earth reference map, and `ResearchWorkspace` chat), each backed by its
+      contracted endpoint and live-verified end-to-end 2026-07-11 (this agent,
+      by explicit user request — see Iteration log). 24 frontend tests and the
+      production build pass.
+- [ ] Actual in-browser WebGL/3D visual QA of the live `#compare` (trait
+      network) and `#atlas` (Earth globe) canvases — no browser-automation
+      tool was available this pass; a human or Codex visual check remains.
 
 ### Verification commands
 

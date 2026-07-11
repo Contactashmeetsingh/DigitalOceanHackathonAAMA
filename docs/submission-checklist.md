@@ -15,8 +15,11 @@ publishing checks remain intentionally open until the final targeted index.
       mandatory `disclaimer`/`citations` payload.
 - [ ] Frontend renders the trait-network as explicitly synthetic and the globe
       as real cited reference populations, using each response's `disclaimer`.
-      Both safe adapters and same-origin API calls are implemented and covered
-      by 21 passing frontend tests; production-build visual verification remains.
+      Both are now mounted in `App.jsx` (previously built and tested but never
+      rendered) and live-verified end-to-end against the deployed API
+      2026-07-11 (commit `d87b13e`, deployment `c163c596`); 24 frontend tests
+      and the production build pass. Actual in-browser WebGL/3D visual QA
+      remains — no browser-automation tool was available this pass.
 - [x] Frontend/backend integration contract is documented and locally checked,
       including the `/api/comparison-cohort` and `/api/population-map`
       endpoint specs for the trait-network and 3D globe surfaces.
@@ -51,7 +54,7 @@ publishing checks remain intentionally open until the final targeted index.
 - [x] Confirm serverless fallback behavior if the agent path is intentionally used.
 - [x] Run live homepage, `/health`, and no-file invalid-upload checks.
 - [x] Run a valid-upload check with an approved open-consent PGP demo file.
-- [x] Record the live URL and deployment revision: `jellyfish-app-jbnoq.ondigitalocean.app`, commit `b0272fd`.
+- [x] Record the live URL and deployment revision: `jellyfish-app-jbnoq.ondigitalocean.app`, commit `d87b13e` (deployment `c163c596`).
 
 ## Pitch and submission
 
