@@ -1,219 +1,102 @@
-# Evidence-atlas UI roadmap
+# Three-pillar audit instrument
 
-## Product decision
+## Implemented product decision
 
-The next visualization is an **evidence atlas**, not a genetic map of a person.
-This app must never use an uploaded genotype file to place someone on a world
-map, infer a country/ethnicity/community, or present a broad research label as
-identity. The only population context it may display is a broad label the user
-copied from an existing result, and even that label is explanatory context—not a
-new conclusion.
+The visualization layer is now a source-backed **reference comparison
+instrument**. It may compare an uploaded GRCh37 consumer genotype file with the
+1000 Genomes Phase 3 population-frequency panel, but it must not turn that
+comparison into ancestry percentages, an ethnicity verdict, identity, community
+membership, or a geographic origin claim.
 
-The map and 3D language should therefore mean:
+The instrument keeps three different kinds of information visibly separate:
 
-- **2D coverage atlas:** where *published, aggregate research evidence* is
-  available or thin, with the source, denominator, date, and methodology shown.
-- **3D evidence landscape:** an optional aggregate comparison of evidence
-  dimensions, never a PCA/UMAP plot of people or a cluster assignment of the
-  uploader.
+1. **Genetic-closeness graph:** aggregate allele-frequency RMS distances from
+   the uploaded sample to 26 reference sampling labels.
+2. **Reference-panel Earth map:** approximate display anchors derived from the
+   official population descriptions, plus TOPMed r2 broad analytical counts that
+   expose panel imbalance.
+3. **Deterministic report:** coverage, allowlisted non-medical traits,
+   default-deny refusals, user-supplied broad context, studies, and optional
+   cited Gradient AI answers.
 
-## Current UI direction
+The optional broad label is never used to compute, verify, or alter the genetic
+distance. It remains text context copied from a result the user already has.
 
-The interface has been upgraded to an evidence-console pattern:
+## Data and method
 
-1. A short scientific/editorial hero explains the product promise.
-2. A three-item safeguard rail establishes in-memory handling, no re-inference,
-   and default-deny limits before an upload is requested.
-3. The upload is the single primary action. The empty state previews the report
-   rather than showing a blank card.
-4. The existing reference-panel bar chart has optional highlighting only; it
-   never preselects a label as if it belonged to the user. It now also includes a
-   data-table fallback.
-5. The visual roadmap is visible in the product as an explicitly **planned**
-   capability, so the demo does not imply that an atlas already exists.
+The runtime reference is generated from the user-specified build-37 PLINK 2
+Phase 3 files:
 
-## What the UI should add next
+- `all_phase3.pgen.zst`
+- `all_phase3.pvar.zst`
+- `phase3_corrected.psam`
+- IGSR `20131219.populations.tsv`
+- IGSR `20131219.superpopulations.tsv`
 
-Prioritize these before adding visual spectacle:
+The reproducible selection retains 19,979 rsID SNPs after autosomal,
+biallelic, A/C/G/T, MAF, missingness, non-palindromic, duplicate-ID, LD-pruning,
+and seeded thinning filters. See `data/reference/README.md` for exact commands
+and `phase3_reference.metadata.json` for input SHA-256 checksums.
 
-| Priority | Capability | Why it matters |
-|---|---|---|
-| P0 | Provenance drawer for every number | Shows source URL, publication date, denominator, definition, and last review date. |
-| P0 | Plain-language chart/table toggle | Makes every visual usable with a screen reader, keyboard, small screen, or low-bandwidth connection. |
-| P0 | “What this does not mean” caption | Prevents users from reading population-reference data as a claim about themselves. |
-| P1 | Report navigation/progress | Lets a user jump between coverage, traits, limits, context, and studies after analysis. |
-| P1 | Share-safe export | Exports only the deterministic report summary and citations—never raw genotypes, marker calls beyond displayed allowlisted traits, or a copied population label without consent. |
-| P1 | Evidence freshness labels | Shows when a study/status record was reviewed and offers a direct official source. |
-| P2 | Guided compare mode | Lets someone compare two *published aggregate datasets*, with no user point or identity label. |
-| P2 | Glossary | Defines reference panel, imputation, validation cohort, analytical assignment, and uncertainty in plain language. |
+For each compatible overlapping SNP, the backend compares the uploaded diploid
+alternate-allele fraction (0, 0.5, or 1) with the reference population's
+alternate-allele frequency. The displayed value is the root mean square of
+those differences. Lower means a smaller measured distance on this SNP subset;
+it is not a percentage or calibrated probability.
 
-## 2D coverage-atlas specification
+The 3D direction comes from classical multidimensional scaling of pairwise
+population-frequency distances. The uploaded sample stays at the comparison
+origin and the user-specific radial edge length represents the RMS distance.
+This is the explicitly labelled frequency-distance fallback, not formal PCA
+projection of the uploader.
 
-### The right question
+## Validation and limits
 
-> “How much published reference or validation evidence is available for this
-> cited analytical grouping, and what are its limits?”
+The selected panel overlaps 2,841 markers on the public open-consent PGP v4
+chip file used during development; 2,836 are callable and allele-compatible in
+that fixture. Leave-one-out validation on the 2,504 reference samples produced:
 
-Not: “Where is this person from?” or “Which population does this genome belong
-to?”
+- 99.24% agreement with the five source superpopulation labels using all 20,000
+  selected markers;
+- 99.28% superpopulation agreement on the 2,841-marker v4-chip overlap;
+- 75.24% fine population-label agreement on that same chip overlap.
 
-### Data model
+The fine-label result is deliberately displayed as a limitation. The product
+shows the full distance ordering and exact reference N, but does not announce a
+single population assignment. Different consumer chips may overlap different
+SNPs, so distances are not comparable across uploads.
 
-Each visible region/group needs a checked aggregate record:
+## Geography contract
 
-```json
-{
-  "id": "south-asian",
-  "label": "South Asian analytical assignment",
-  "metric": "reference_panel_count",
-  "value": 644,
-  "denominator": 97256,
-  "source": {
-    "label": "Taliun et al., Nature (2021)",
-    "url": "https://www.nature.com/articles/s41586-021-03205-y",
-    "published": "2021-02-10"
-  },
-  "methodology": "Principal-components and nearest-1000-Genomes analytical assignment.",
-  "last_reviewed": "2026-07-11",
-  "identity_caveat": "This is a broad research label, not a community or an identity.",
-  "geometry_key": "south_asia_aggregate"
-}
-```
+The solid map markers are approximate anchors derived from phrases such as
+“Tokyo, Japan,” “Lahore, Pakistan,” or broader country/region descriptions in
+the official IGSR table. They are explicitly labelled by precision. They are
+not participant residences, birthplaces, or inferred user origins.
 
-Do not manufacture geometry from a label. A world shape should be used only
-when the source genuinely supports an aggregate geographic metric. If a record
-is an analytical assignment rather than a geographic sample origin, use a
-**non-geographic tile/region atlas** instead of pretending it maps to a country.
+The translucent TOPMed bubbles use the existing mutually exclusive r2
+analytical counts and shared 97,256 denominator. Their regional positions are
+schematic anchors for broad labels, not collection sites. This layer exists to
+make representation imbalance legible; its values never enter the genetic
+distance calculation.
 
-### Visual design
+## Interaction and accessibility
 
-- Use a small set of muted blue tonal fills for one metric, plus a focused amber
-  outline only for a user-selected **published comparison**.
-- Show source, value, denominator, and caveat in a persistent side panel—not
-  hover alone.
-- Put an explicit annotation above the visual: “Aggregate evidence coverage;
-  this does not locate or classify you.”
-- Add a visible `Map / Table` switch. The table is equal in capability: sortable,
-  keyboard usable, and source-linked.
-- Keep the map static at first. Avoid pan/zoom until there are enough regions and
-  a reason to inspect geography.
-- Do not use heat-map gradients to imply precision beyond the underlying data.
+- Pointer drag, wheel zoom, arrow/zoom buttons, and Reset control the 3D view.
+- Every population node is keyboard focusable and selectable with Enter/Space.
+- One shared selection cross-highlights the 3D and Earth views and updates a
+  persistent inspector with name, superpopulation, sample N, distance, and map
+  anchor precision.
+- Thin reference groups (`N < 80`) use amber, dashed geometry, a text warning,
+  and an exact denominator rather than color alone.
+- A complete 26-row table exposes the same values and selection behavior.
+- Reduced-motion and forced-colors modes remain supported.
+- No remote fonts, map tiles, analytics, or WebGL dependencies are loaded.
 
-### Interaction model
+## Remaining review work
 
-1. The default state is neutral: no population is selected.
-2. A user may select a published comparison label from a labelled control.
-3. The visual highlights the cited aggregate group and the side panel updates.
-4. The report always repeats: “This does not classify uploaded DNA.”
-5. A keyboard user can move through labelled regions or use the table. Focus and
-   selection have text as well as color.
-
-### Implementation choice
-
-Start with a React-rendered SVG or tile grid and local JSON data. This has a
-small bundle, is easy to test, and avoids third-party map-tile requests while
-the product is processing sensitive genetic data. Consider MapLibre/Deck.gl only
-after there is a source-backed geographic dataset, a privacy review of tile
-requests, and a real need for pan/zoom.
-
-## 3D evidence-landscape specification
-
-### Use only for an aggregate question
-
-3D can show trade-offs such as:
-
-- x: cited reference-panel size;
-- y: number or breadth of validation cohorts;
-- z: evidence/citation recency or source coverage;
-- color/shape: dataset family, with a text label for every item.
-
-It must **not** show an uploader’s position, a genetic cluster, a country,
-ethnicity, or a predicted community. It must not auto-rotate or make a
-three-dimensional aesthetic imply biological distance.
-
-### Interaction and accessibility
-
-- Make the 3D view an optional advanced view after the accessible 2D/table
-  version is complete.
-- Default to a fixed camera and include a `Reset view` button.
-- Offer named camera presets rather than requiring mouse precision.
-- Respect reduced motion and provide a complete 2D scatter/table alternative.
-- Keep fewer than 25 labelled aggregate points; otherwise use filtering or small
-  multiples.
-- Put the exact axis definitions, transformation, source, and caveat beside the
-  visualization.
-
-### Recommended sequence
-
-1. Ship the data model, provenance drawer, table, and 2D tile atlas.
-2. Validate the interpretation with users and accessibility review.
-3. Add a 2D scatterplot for the three aggregate evidence dimensions.
-4. Only then add an optional WebGL/Three.js layer if it reveals a relationship
-   the 2D plot cannot. Keep the 2D fallback as the default for small screens and
-   reduced-motion preferences.
-
-## Copy-ready implementation prompt
-
-Use this prompt with a coding agent when the data contract is ready:
-
-```text
-You are a senior React data-visualization engineer working on the Ancestry Audit
-Layer. Implement an aggregate Evidence Atlas in the existing Vite/React frontend.
-
-Product goal
-- Help users understand unequal representation in published reference/validation
-  datasets. This is an evidence-transparency tool, not an ancestry inference tool.
-
-Non-negotiable safety rules
-- Never derive a person’s location, ancestry, ethnicity, community, country, or
-  cluster from uploaded DNA.
-- Never plot a user point, marker, trajectory, or inferred population on the map
-  or 3D view.
-- Display only source-backed aggregate records. Every record must expose its
-  source URL, publication date, denominator, metric definition, methodology,
-  last-reviewed date, and identity caveat.
-- Use research-source labels exactly as documented. Do not replace analytical
-  assignments with identity claims such as “Indian,” “Chinese,” or “American.”
-- Preserve the current default-deny, non-medical, privacy, and no-storage copy.
-
-Technical constraints
-- Keep the existing React/Vite stack and current CSS-variable theme. Do not add
-  Tailwind, a component library, analytics, remote fonts, or third-party map
-  tiles.
-- Start from a local, version-controlled JSON dataset and validate it with Node
-  tests. Do not invent values or geometry.
-- Build `EvidenceAtlas`, `EvidenceDetails`, and `EvidenceTable` components.
-- Use an accessible SVG tile/region atlas for the first version. The default state
-  has no selected group. A labelled select control may highlight one published
-  comparison group, but must say that it does not classify the uploaded DNA.
-- Provide an equally capable table view with sortable columns: label, metric,
-  value, denominator, source date, and last reviewed.
-- Include a persistent visible annotation: “Aggregate evidence coverage; this
-  does not locate or classify you.”
-- All interactive controls must be keyboard usable, have visible focus, meet a
-  44px target size, and work with prefers-reduced-motion and forced colors.
-- Charts must not rely on color alone. Include direct labels and text summaries.
-- Keep the bundle lightweight. Do not add WebGL in this phase.
-
-Data contract
-- Define a typed/validated record with id, label, metric, value, denominator,
-  source { label, url, published }, methodology, last_reviewed, identity_caveat,
-  and optional geometry_key.
-- If a dataset has analytical assignments rather than true geographic origins,
-  render a non-geographic tile atlas. Never draw country boundaries as a proxy.
-
-Acceptance criteria
-1. Existing upload, deterministic report, trait, boundary, study, and reference
-   panel flows continue to work unchanged.
-2. Atlas has a source-backed, neutral default state and no user location/point.
-3. Table and SVG views show the same values and have automated integrity tests.
-4. Every selected item shows all provenance fields and a readable caveat.
-5. Mobile layout has no horizontal page scroll; the table can scroll within its
-   own labelled container if necessary.
-6. `npm test` and `npm run build` pass.
-
-Do not begin a 3D view until this 2D version is complete and reviewed. In a
-second phase, propose a 2D scatterplot plus an optional WebGL enhancement that
-plots only aggregate evidence records, with fixed-camera defaults and a complete
-2D/table fallback.
-```
+- User testing of the distance explanation and “not a percentage” language.
+- Screen-reader review in VoiceOver/NVDA beyond automated semantic checks.
+- Optional glossary definitions for RMS distance, reference panel, sampling
+  label, analytical assignment, MDS, and chip overlap.
+- Share-safe export of aggregate report text and citations only; never export
+  the retained comparison markers or copied label without explicit consent.

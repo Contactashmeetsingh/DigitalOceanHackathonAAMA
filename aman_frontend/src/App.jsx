@@ -1,14 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-import {
-  analyzeGenome,
-  requestComparisonCohort,
-  requestPopulationMap,
-} from "./api.js";
-import AncestryGlobe from "./components/AncestryGlobe.jsx";
+import { analyzeGenome } from "./api.js";
 import ResearchWorkspace from "./components/ResearchWorkspace.jsx";
-import TraitNetwork from "./components/TraitNetwork.jsx";
 import { TOPMED_PANEL } from "./referencePanelData.js";
+import {
+  clamp,
+  distanceExtent,
+  markerRadius,
+  projectGeo,
+  projectPopulation3d,
+} from "./geneticInstrument.js";
 import { canReplaceSelectedFile } from "./uploadInteraction.js";
 
 const ANSWER_CATEGORIES = [
@@ -50,16 +51,6 @@ const ANSWER_CATEGORIES = [
   },
 ];
 
-function emptyVisualizationState() {
-  return { data: null, status: "idle", error: "" };
-}
-
-function visualizationError(error) {
-  return error instanceof Error
-    ? error.message
-    : "This visualization could not be loaded. The evidence report is still available.";
-}
-
 const TRUST_PROMISES = [
   {
     icon: "vault",
@@ -77,6 +68,27 @@ const TRUST_PROMISES = [
     description: "Health, exact-ethnicity, and off-allowlist requests remain out of scope.",
   },
 ];
+
+const WORLD_LANDMASSES = [
+  "M55 112 L90 75 155 58 210 82 250 120 235 155 205 160 188 195 155 205 130 180 95 170 70 142Z",
+  "M230 210 L275 218 300 252 290 296 270 340 248 393 225 360 218 305 202 260Z",
+  "M440 95 L480 75 525 86 548 112 530 130 492 125 470 145 442 132Z",
+  "M474 152 L528 150 558 185 548 245 522 310 488 288 468 230 452 190Z",
+  "M530 92 L595 62 700 58 780 88 860 100 930 142 902 185 830 175 780 212 715 185 665 200 620 170 570 165 548 126Z",
+  "M790 305 L836 288 890 304 914 340 884 374 830 368 802 342Z",
+  "M305 42 L354 24 400 44 380 78 334 84Z",
+];
+
+const TOPMED_MAP_GROUPS = [
+  { id: "european", label: "European", lat: 50, lon: 15 },
+  { id: "african", label: "African", lat: 8, lon: 18 },
+  { id: "admixed-american", label: "Admixed American", lat: 5, lon: -73 },
+  { id: "east-asian", label: "East Asian", lat: 35, lon: 112 },
+  { id: "south-asian", label: "South Asian", lat: 22, lon: 78 },
+].map((anchor) => ({
+  ...anchor,
+  ...TOPMED_PANEL.groups.find((group) => group.id === anchor.id),
+}));
 
 function Icon({ name, size = 20 }) {
   const common = {
@@ -122,8 +134,6 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null); // { data } | { error }
   const [fileError, setFileError] = useState("");
-  const [cohortState, setCohortState] = useState(emptyVisualizationState);
-  const [populationMapState, setPopulationMapState] = useState(emptyVisualizationState);
   const inputRef = useRef(null);
   const resultRef = useRef(null);
 
@@ -134,8 +144,6 @@ export default function App() {
   function pickFile(candidate) {
     if (!canReplaceSelectedFile(loading)) return;
     setResult(null);
-    setCohortState(emptyVisualizationState());
-    setPopulationMapState(emptyVisualizationState());
     setFileError("");
     if (!candidate) {
       setFile(null);
@@ -177,26 +185,9 @@ export default function App() {
     }
     setLoading(true);
     setResult(null);
-    setCohortState(emptyVisualizationState());
-    setPopulationMapState(emptyVisualizationState());
-
     try {
       const data = await analyzeGenome({ file, populationLabel });
       setResult({ data, submittedPopulationLabel: populationLabel.trim() });
-      setCohortState({ data: null, status: "loading", error: "" });
-      setPopulationMapState({ data: null, status: "loading", error: "" });
-
-      const [cohortResult, populationMapResult] = await Promise.allSettled([
-        requestComparisonCohort({ report: data }),
-        requestPopulationMap({ report: data }),
-      ]);
-
-      setCohortState(cohortResult.status === "fulfilled"
-        ? { data: cohortResult.value, status: "ready", error: "" }
-        : { data: null, status: "error", error: visualizationError(cohortResult.reason) });
-      setPopulationMapState(populationMapResult.status === "fulfilled"
-        ? { data: populationMapResult.value, status: "ready", error: "" }
-        : { data: null, status: "error", error: visualizationError(populationMapResult.reason) });
     } catch (error) {
       setResult({
         error: error instanceof Error
@@ -218,9 +209,10 @@ export default function App() {
             <span>Ancestry <strong>Audit</strong></span>
           </a>
           <nav className="site-nav" aria-label="Product sections">
-            <a href="#compare">Trait space</a>
-            <a href="#atlas">Atlas</a>
+            <a href="#instrument">Reference distance</a>
             <a href="#research">Research</a>
+            <a href="#evidence">Evidence</a>
+            <a href="#report">Report</a>
           </nav>
           <a className="header-cta" href="#analyze">Audit my data</a>
         </div>
@@ -237,12 +229,12 @@ export default function App() {
             </p>
             <div className="hero-actions-new">
               <a className="hero-primary" href="#analyze">Start a private audit <span>↘</span></a>
-              <a className="hero-secondary" href="#compare">Explore the preview</a>
+              <a className="hero-secondary" href="#instrument">Explore the instrument</a>
             </div>
             <div className="hero-proof" aria-label="Product proof points">
               <span><strong>In memory</strong>Raw file handling</span>
               <span><strong>6</strong>Vetted trait lenses</span>
-              <span><strong>128</strong>Synthetic comparisons</span>
+              <span><strong>26</strong>Real reference populations</span>
             </div>
           </div>
 
@@ -259,7 +251,7 @@ export default function App() {
                 <span className="mini-avatar">AA</span>
               </div>
               <div className="mini-dashboard">
-                <div className="mini-dashboard-head"><div><small>Your evidence map</small><strong>Trait space</strong></div><span>128 profiles</span></div>
+                <div className="mini-dashboard-head"><div><small>Your evidence map</small><strong>Reference distance</strong></div><span>26 populations</span></div>
                 <div className="mini-graph" aria-hidden="true">
                   <span className="mini-core" />
                   {Array.from({ length: 30 }, (_, index) => (
@@ -354,7 +346,7 @@ export default function App() {
               <p className="inspector-label">Inside the audit</p>
               <ol>
                 <li><span>01</span><div><strong>Validate</strong><p>Verify the vendor, build, rows, and no-calls.</p></div></li>
-                <li><span>02</span><div><strong>Minimize</strong><p>Retain only the reviewed, non-medical allowlist.</p></div></li>
+                <li><span>02</span><div><strong>Minimize</strong><p>Retain only reviewed trait and reference-panel markers in memory.</p></div></li>
                 <li><span>03</span><div><strong>Contextualize</strong><p>Pair every result with evidence and transfer limits.</p></div></li>
                 <li><span>04</span><div><strong>Ask</strong><p>Send only the safe report fields to Gradient AI.</p></div></li>
               </ol>
@@ -366,16 +358,6 @@ export default function App() {
           </div>
         </section>
 
-        <TraitNetwork
-          reportData={result?.data}
-          cohortData={cohortState.data}
-          dataStatus={{ status: cohortState.status, error: cohortState.error }}
-        />
-        <AncestryGlobe
-          populationLabel={result?.submittedPopulationLabel || populationLabel.trim()}
-          populationMapData={populationMapState.data}
-          dataStatus={{ status: populationMapState.status, error: populationMapState.error }}
-        />
         <ResearchWorkspace reportData={result?.data} />
 
         <section
@@ -412,31 +394,266 @@ export default function App() {
         <footer className="site-footer">
           <a className="brand-lockup" href="#overview"><span className="brand-glyph small"><i /><i /><i /></span><span>Ancestry <strong>Audit</strong></span></a>
           <p>Interpretation and transparency for consumer DNA results. Built for AI for Social Good with DigitalOcean.</p>
-          <div><a href="#analyze">Analyze</a><a href="#compare">Compare</a><a href="#atlas">Atlas</a><a href="#research">Research</a></div>
+          <div><a href="#analyze">Analyze</a><a href="#instrument">Instrument</a><a href="#research">Research</a><a href="#report">Report</a></div>
         </footer>
       </main>
     </div>
   );
 }
 
-function EvidenceAtlasRoadmap() {
+function AuditInstrument({ closeness, populationContext, selectedCode, onSelect }) {
+  const envelope = isRecord(closeness) ? closeness : {};
+  const populations = asArray(envelope.populations);
+  const selectedPopulation = populations.find((population) => population.code === selectedCode);
+  const available = envelope.status === "available";
+  const broadLabel = populationContext?.canonical_label || populationContext?.original_label;
+
   return (
-    <section className="card atlas-roadmap" aria-labelledby="atlas-roadmap-heading">
-      <div className="section-heading atlas-heading">
-        <div><p className="step-label">Visualization roadmap</p><h2 id="atlas-roadmap-heading">Build an evidence atlas—not a person map</h2></div>
-        <span className="state-pill waiting">Planned</span>
+    <section className="audit-instrument" id="instrument" aria-labelledby="instrument-heading">
+      <div className="instrument-heading">
+        <div>
+          <p className="step-label">Three-pillar audit instrument</p>
+          <h2 id="instrument-heading">Distance, geography, and evidence in one view</h2>
+          <p>
+            Reference comparison is separated from the label you supplied. Neither view calculates
+            ancestry percentages or verifies identity.
+          </p>
+        </div>
+        <div className="instrument-status" aria-label="Reference comparison status">
+          <span className={`status-lamp ${available ? "online" : "warning"}`} aria-hidden="true" />
+          <span><strong>{available ? "DISTANCE ONLINE" : "DISTANCE WITHHELD"}</strong>{envelope.overlap?.usable_markers || 0} / {envelope.overlap?.panel_markers || 0} SNP overlap</span>
+        </div>
       </div>
-      <p className="section-intro">
-        The next visual layer should show cited, aggregate research coverage. It must never plot a person,
-        derive their location, or turn a broad research label into identity.
-      </p>
-      <div className="atlas-grid">
-        <article><span className="atlas-icon"><Icon name="map" size={22} /></span><h3>2D coverage atlas</h3><p>Region-level evidence availability with source, date, denominator, and a keyboard-accessible table.</p></article>
-        <article><span className="atlas-icon"><Icon name="layers" size={22} /></span><h3>3D evidence landscape</h3><p>Optional read-only layers for reference-panel size, validation breadth, and citation depth—not genetic clustering.</p></article>
-        <article><span className="atlas-number">03</span><h3>Plain-language fallback</h3><p>Every visual needs a sortable data view, a concise takeaway, and a visible explanation of what it cannot show.</p></article>
+
+      {!available && <p className="instrument-warning" role="status">{envelope.message || "The reference comparison is unavailable. The guided report remains complete."}</p>}
+
+      <div className="visual-grid">
+        <GeneticClosenessMap
+          populations={populations}
+          available={available}
+          selectedCode={selectedCode}
+          onSelect={onSelect}
+          method={envelope.method}
+        />
+        <EarthReferenceMap
+          populations={populations}
+          selectedCode={selectedCode}
+          onSelect={onSelect}
+          broadLabel={broadLabel}
+        />
       </div>
-      <p className="atlas-note">The full build brief and implementation prompt are documented with this project for the next implementation phase.</p>
+
+      <PopulationInspector population={selectedPopulation} />
+
+      <details className="instrument-table">
+        <summary>Inspect all 26 reference populations as data</summary>
+        <div className="instrument-table-scroll">
+          <table>
+            <caption>1000 Genomes Phase 3 reference populations and uploaded-sample frequency distances</caption>
+            <thead><tr><th scope="col">Code</th><th scope="col">Official description</th><th scope="col">Superpopulation</th><th scope="col">Reference N</th><th scope="col">Distance</th><th scope="col">Rank</th></tr></thead>
+            <tbody>
+              {[...populations].sort((a, b) => (a.rank || 99) - (b.rank || 99)).map((population) => (
+                <tr className={population.code === selectedCode ? "selected-row" : ""} key={population.code}>
+                  <th scope="row"><button type="button" onClick={() => onSelect(population.code)}>{population.code}</button></th>
+                  <td>{population.name}</td><td>{population.superpopulation}</td><td>{formatValue(population.sample_count)}</td>
+                  <td>{Number.isFinite(Number(population.distance)) ? Number(population.distance).toFixed(6) : "Withheld"}</td>
+                  <td>{population.rank || "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </details>
+
+      <div className="instrument-provenance">
+        <div><span>METHOD</span><strong>{envelope.method?.label || "Reference unavailable"}</strong></div>
+        <div><span>REFERENCE</span><strong>{envelope.reference?.name || "1000 Genomes Phase 3"} · N={formatValue(envelope.reference?.sample_count || 2504)}</strong></div>
+        <div><span>USER LABEL</span><strong>{broadLabel || "Not supplied"} · never inferred</strong></div>
+      </div>
+      <ul className="instrument-caveats">
+        {asArray(envelope.caveats).map((caveat) => <li key={caveat}>{caveat}</li>)}
+      </ul>
+      <div className="source-list instrument-sources">
+        {Object.entries(envelope.reference?.sources || {}).map(([key, url]) => isExternalUrl(url) && (
+          <a className="source-link" href={url} target="_blank" rel="noreferrer" key={url}>Source: {key.replaceAll("_", " ")}</a>
+        ))}
+      </div>
     </section>
+  );
+}
+
+function GeneticClosenessMap({ populations, available, selectedCode, onSelect, method }) {
+  const [rotation, setRotation] = useState({ yaw: -0.55, pitch: 0.22, zoom: 1 });
+  const dragRef = useRef(null);
+  const extent = useMemo(() => distanceExtent(populations), [populations]);
+  const projected = useMemo(
+    () => populations
+      .map((population) => ({
+        population,
+        point: projectPopulation3d(population, rotation, extent),
+      }))
+      .sort((a, b) => a.point.z - b.point.z),
+    [populations, rotation, extent],
+  );
+
+  function nudge(key) {
+    setRotation((current) => {
+      if (key === "left") return { ...current, yaw: current.yaw - 0.18 };
+      if (key === "right") return { ...current, yaw: current.yaw + 0.18 };
+      if (key === "up") return { ...current, pitch: clamp(current.pitch - 0.14, -1.2, 1.2) };
+      if (key === "down") return { ...current, pitch: clamp(current.pitch + 0.14, -1.2, 1.2) };
+      if (key === "in") return { ...current, zoom: clamp(current.zoom + 0.12, 0.72, 1.55) };
+      if (key === "out") return { ...current, zoom: clamp(current.zoom - 0.12, 0.72, 1.55) };
+      return { yaw: -0.55, pitch: 0.22, zoom: 1 };
+    });
+  }
+
+  return (
+    <article className="instrument-panel closeness-panel" aria-labelledby="closeness-map-heading">
+      <header className="panel-header">
+        <div><span className="pillar-index">01 / VECTOR SPACE</span><h3 id="closeness-map-heading">3D genetic-closeness map</h3></div>
+        <span className="method-badge">RMS FREQ DIST</span>
+      </header>
+      <p className="panel-description">Drag to orbit · wheel to zoom · select a node. Radial edge length encodes distance; angle comes from population-frequency MDS.</p>
+      <div className="orbit-controls" aria-label="3D map controls">
+        <button type="button" onClick={() => nudge("left")} aria-label="Rotate left">←</button>
+        <button type="button" onClick={() => nudge("right")} aria-label="Rotate right">→</button>
+        <button type="button" onClick={() => nudge("up")} aria-label="Rotate up">↑</button>
+        <button type="button" onClick={() => nudge("down")} aria-label="Rotate down">↓</button>
+        <button type="button" onClick={() => nudge("in")} aria-label="Zoom in">+</button>
+        <button type="button" onClick={() => nudge("out")} aria-label="Zoom out">−</button>
+        <button type="button" onClick={() => nudge("reset")}>Reset</button>
+      </div>
+      <svg
+        className="closeness-svg"
+        viewBox="0 0 640 460"
+        role="img"
+        aria-label="Interactive radial graph of the uploaded sample's allele-frequency distance to 26 reference populations"
+        onPointerDown={(event) => {
+          dragRef.current = { x: event.clientX, y: event.clientY, yaw: rotation.yaw, pitch: rotation.pitch };
+          event.currentTarget.setPointerCapture(event.pointerId);
+        }}
+        onPointerMove={(event) => {
+          if (!dragRef.current) return;
+          const deltaX = event.clientX - dragRef.current.x;
+          const deltaY = event.clientY - dragRef.current.y;
+          setRotation((current) => ({
+            ...current,
+            yaw: dragRef.current.yaw + deltaX * 0.008,
+            pitch: clamp(dragRef.current.pitch + deltaY * 0.008, -1.2, 1.2),
+          }));
+        }}
+        onPointerUp={() => { dragRef.current = null; }}
+        onPointerCancel={() => { dragRef.current = null; }}
+        onWheel={(event) => {
+          event.preventDefault();
+          setRotation((current) => ({ ...current, zoom: clamp(current.zoom - event.deltaY * 0.001, 0.72, 1.55) }));
+        }}
+      >
+        <defs>
+          <radialGradient id="user-point"><stop offset="0" stopColor="#e7fbff" /><stop offset="0.35" stopColor="#39d0ff" /><stop offset="1" stopColor="#087aa0" /></radialGradient>
+          <filter id="user-glow"><feGaussianBlur stdDeviation="5" /></filter>
+        </defs>
+        <g className="orbit-grid" aria-hidden="true">
+          <ellipse cx="320" cy="230" rx="225" ry="88" /><ellipse cx="320" cy="230" rx="150" ry="58" />
+          <line x1="70" y1="230" x2="570" y2="230" /><line x1="320" y1="32" x2="320" y2="428" />
+        </g>
+        {available && projected.map(({ population, point }) => (
+          <line
+            className={`distance-edge${population.thin_reference ? " thin" : ""}${population.code === selectedCode ? " selected" : ""}`}
+            x1="320" y1="230" x2={point.x} y2={point.y} key={`edge-${population.code}`}
+          />
+        ))}
+        <circle className="user-glow" cx="320" cy="230" r="22" filter="url(#user-glow)" />
+        <circle className="user-node" cx="320" cy="230" r="9" fill="url(#user-point)"><title>Uploaded sample · comparison origin, not a geographic location</title></circle>
+        <text className="user-node-label" x="334" y="226">UPLOADED SAMPLE</text>
+        <text className="user-node-label sub" x="334" y="241">comparison origin</text>
+        {available && projected.map(({ population, point }) => {
+          const selected = population.code === selectedCode;
+          const radius = markerRadius(population.sample_count) * point.scale;
+          return (
+            <g
+              className={`population-node${selected ? " selected" : ""}${population.thin_reference ? " thin" : ""}`}
+              role="button" tabIndex="0" aria-pressed={selected}
+              aria-label={`${population.code}, reference N ${population.sample_count}, distance ${Number(population.distance).toFixed(6)}${population.thin_reference ? ", thin reference warning" : ""}`}
+              transform={`translate(${point.x} ${point.y})`}
+              onClick={() => onSelect(population.code)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(population.code); }
+              }}
+              key={population.code}
+            >
+              <circle r={radius} /><text x={radius + 5} y="4">{population.code}</text>
+              <title>{population.name} · N={population.sample_count} · distance {Number(population.distance).toFixed(6)}</title>
+            </g>
+          );
+        })}
+      </svg>
+      <footer className="panel-footer"><span>{method?.label || "Reference unavailable"}</span><span>Lower = closer · not a percentage</span></footer>
+    </article>
+  );
+}
+
+function EarthReferenceMap({ populations, selectedCode, onSelect, broadLabel }) {
+  return (
+    <article className="instrument-panel earth-panel" aria-labelledby="earth-map-heading">
+      <header className="panel-header">
+        <div><span className="pillar-index">02 / GEOGRAPHY</span><h3 id="earth-map-heading">Reference-panel Earth map</h3></div>
+        <span className="method-badge warning">SAMPLING N</span>
+      </header>
+      <p className="panel-description">Solid markers: 1000 Genomes description anchors. Translucent bubbles: TOPMed r2 broad analytical counts on schematic regional anchors.</p>
+      <div className="user-label-overlay"><span>USER-SUPPLIED BROAD LABEL</span><strong>{broadLabel || "Not supplied"}</strong><small>Text context only · never geolocated</small></div>
+      <svg className="earth-svg" viewBox="0 0 1000 500" role="img" aria-label="World map of 1000 Genomes population-description anchors and TOPMed sample-count imbalance">
+        <rect width="1000" height="500" className="ocean" />
+        <g className="map-grid" aria-hidden="true">{[100, 200, 300, 400].map((y) => <line x1="0" y1={y} x2="1000" y2={y} key={`y-${y}`} />)}{[125, 250, 375, 500, 625, 750, 875].map((x) => <line x1={x} y1="0" x2={x} y2="500" key={`x-${x}`} />)}</g>
+        <g className="land" aria-hidden="true">{WORLD_LANDMASSES.map((path) => <path d={path} key={path} />)}</g>
+        <g className="topmed-layer">
+          {TOPMED_MAP_GROUPS.map((group) => {
+            const point = projectGeo(group);
+            const radius = Math.max(7, Math.sqrt(group.count) / 4);
+            return <g transform={`translate(${point.x} ${point.y})`} key={group.id}><circle r={radius} /><text y={radius + 13}>{group.label} · {formatValue(group.count)}</text><title>TOPMed r2 {group.label} analytical assignment: {formatValue(group.count)} of {formatValue(TOPMED_PANEL.total)}. Schematic regional anchor, not a collection site.</title></g>;
+          })}
+        </g>
+        <g className="reference-marker-layer">
+          {populations.map((population) => {
+            const point = projectGeo(population.location);
+            const selected = population.code === selectedCode;
+            return (
+              <g
+                className={`map-marker${selected ? " selected" : ""}${population.thin_reference ? " thin" : ""}`}
+                transform={`translate(${point.x} ${point.y})`}
+                role="button" tabIndex="0" aria-pressed={selected}
+                aria-label={`${population.code}, ${population.location?.label}, reference N ${population.sample_count}`}
+                onClick={() => onSelect(population.code)}
+                onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(population.code); } }}
+                key={population.code}
+              >
+                <circle r={markerRadius(population.sample_count, 5, 9)} /><text x="10" y="4">{population.code}</text>
+                <title>{population.name} · approximate {population.location?.precision} anchor: {population.location?.label} · N={population.sample_count}</title>
+              </g>
+            );
+          })}
+        </g>
+      </svg>
+      <div className="map-legend"><span><i className="legend-dot reference" />1000G population N</span><span><i className="legend-dot topmed" />TOPMed broad N</span><span><i className="legend-dot thin" />N &lt; 80 warning</span></div>
+      <footer className="panel-footer"><span>TOPMed r2 denominator · {formatValue(TOPMED_PANEL.total)}</span><span>Anchors are approximate</span></footer>
+    </article>
+  );
+}
+
+function PopulationInspector({ population }) {
+  return (
+    <aside className={`population-inspector${population ? " active" : ""}`} aria-live="polite">
+      {population ? (
+        <>
+          <div><span>SELECTED REFERENCE</span><strong>{population.code} · {population.superpopulation}</strong></div>
+          <div><span>OFFICIAL DESCRIPTION</span><strong>{population.name}</strong></div>
+          <div><span>REFERENCE N</span><strong>{formatValue(population.sample_count)}{population.thin_reference ? " · THIN PANEL" : ""}</strong></div>
+          <div><span>RMS DISTANCE</span><strong>{Number.isFinite(Number(population.distance)) ? Number(population.distance).toFixed(6) : "WITHHELD"}</strong></div>
+          <div><span>MAP ANCHOR</span><strong>{population.location?.label} · {population.location?.precision}</strong></div>
+        </>
+      ) : <p>Select any reference population in either map to cross-highlight it and inspect its exact denominator.</p>}
+    </aside>
   );
 }
 
@@ -560,6 +777,7 @@ function ReferencePanelChart() {
 }
 
 function Results({ data = {}, submittedPopulationLabel = "" }) {
+  const [selectedPopulationCode, setSelectedPopulationCode] = useState("");
   const stats = isRecord(data.stats) ? data.stats : {};
   const coverage = isRecord(data.coverage) ? data.coverage : {};
   const totalRows = firstDefined(
@@ -584,6 +802,18 @@ function Results({ data = {}, submittedPopulationLabel = "" }) {
       <div className="success-banner" role="status">
         File parsed successfully. This report describes measured coverage and curated evidence—not
         ancestry inference, exact ethnicity, or health risk.
+      </div>
+
+      <AuditInstrument
+        closeness={data.genetic_closeness}
+        populationContext={data.population_context}
+        selectedCode={selectedPopulationCode}
+        onSelect={setSelectedPopulationCode}
+      />
+
+      <div className="report-pillar-heading">
+        <div><span className="pillar-index">03 / DETERMINISTIC REPORT</span><h2>Guided interpretation and research bridge</h2></div>
+        <span className="method-badge">DEFAULT DENY</span>
       </div>
 
       <CoverageSection data={data} stats={stats} coverage={coverage} totalRows={totalRows} />

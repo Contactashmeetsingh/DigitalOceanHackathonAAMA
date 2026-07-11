@@ -139,6 +139,18 @@ repository.
   fail closed without breaking the report. All 85 Python tests pass, and a real
   open-consent v4 POST returned 2,836 compatible markers plus the existing six
   traits, default-deny refusal, transparency reveal, and four matched studies.
+- **2026-07-11 — Integrated distance and Earth pillars (completed):** Replaced
+  the planned-atlas card with a dependency-free SVG audit instrument in the
+  production result: pointer orbit, wheel zoom, keyboard camera controls, 26
+  selectable 3D distance nodes, source-description map anchors, TOPMed r2
+  sample-count bubbles, shared cross-highlighting, persistent exact-N details,
+  thin-panel amber/dashed warnings, provenance links, caveats, and a complete
+  table fallback. Restyled the product as a dense graphite/cyan/amber evidence
+  console while preserving reduced motion, forced colors, focus behavior, and
+  responsive stacking. Seven frontend tests and the Vite build pass. Headless
+  Chrome visual QA uploaded the real public v4 fixture, rendered `DISTANCE
+  ONLINE` with 2,836/19,979 overlap, selected one node across both views, and
+  confirmed the inspector and TOPMed 97,256 denominator on the built bundle.
 - **2026-07-11 — DigitalOcean credential verifier (started):** Validate and
   publish the standalone four-check diagnostic for serverless inference,
   control-plane Knowledge Bases, deployed-agent RAG evidence, and credential
