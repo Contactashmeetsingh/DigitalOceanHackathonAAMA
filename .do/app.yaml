@@ -16,11 +16,15 @@ services:
     health_check:
       http_path: /health
     envs:
+      # Names must match what the code reads (see backend/gradient_client.py + .env.example).
+      # SECRET values are NOT stored here — set them with `doctl apps update` or the
+      # App Platform console so they never land in git. The endpoint URL is not secret.
       - key: DIGITAL_OCEAN_MODEL_ACCESS_KEY
         scope: RUN_TIME
         type: SECRET
       - key: GRADIENT_AGENT_ENDPOINT
         scope: RUN_TIME
+        value: https://hf445igw6lvu4wkti2c3unfb.agents.do-ai.run
       - key: AGENT_ACCESS_KEY
         scope: RUN_TIME
         type: SECRET
