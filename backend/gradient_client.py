@@ -31,10 +31,18 @@ class NarrativeUnavailable(RuntimeError):
 
 def explain(messages: list[dict]) -> dict:
     """Return {"content": str, "citations": list}. Agent path if configured,
-    else serverless-inference fallback. Raises NarrativeUnavailable if neither
-    path is configured or the call fails."""
+    else serverless-inference fallback. If the agent path is configured but
+    fails (bad/rotated credential, agent not provisioned, network error), and
+    a model access key is also available, falls back to serverless inference
+    rather than failing the whole feature on one bad credential. Raises
+    NarrativeUnavailable only if no path is configured or every configured
+    path fails."""
     if AGENT_ENDPOINT and AGENT_ACCESS_KEY:
-        return _via_agent(messages)
+        try:
+            return _via_agent(messages)
+        except NarrativeUnavailable:
+            if not MODEL_ACCESS_KEY:
+                raise
     if MODEL_ACCESS_KEY:
         return _via_serverless(messages)
     raise NarrativeUnavailable(
