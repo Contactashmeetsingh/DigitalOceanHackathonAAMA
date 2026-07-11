@@ -14,6 +14,7 @@ Two paths, one function:
 from __future__ import annotations
 
 import os
+import sys
 
 import requests
 from openai import DefaultHttpxClient, OpenAI, OpenAIError
@@ -42,7 +43,8 @@ def explain(messages: list[dict]) -> dict:
     if AGENT_ENDPOINT and AGENT_ACCESS_KEY:
         try:
             return _via_agent(messages)
-        except NarrativeUnavailable:
+        except NarrativeUnavailable as error:
+            print(f"[gradient_client] agent path failed, falling back: {error}", file=sys.stderr)
             if not MODEL_ACCESS_KEY:
                 raise
     if MODEL_ACCESS_KEY:
@@ -57,17 +59,24 @@ def _via_agent(messages: list[dict]) -> dict:
     try:
         resp = requests.post(
             f"{AGENT_ENDPOINT}/api/v1/chat/completions?agent=true",
-            headers={"Authorization": f"Bearer {AGENT_ACCESS_KEY}"},
+            headers={
+                "Authorization": f"Bearer {AGENT_ACCESS_KEY}",
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
             json={
                 "messages": messages,
                 "stream": False,
                 "include_retrieval_info": True,
-                "include_guardrails_info": True,
-                "include_functions_info": True,
             },
-            timeout=REQUEST_TIMEOUT_S,
+            timeout=(15, REQUEST_TIMEOUT_S),
         )
-        resp.raise_for_status()
+        if not resp.ok:
+            # Body included (truncated) for diagnosis; the agent endpoint and
+            # error responses do not echo back caller credentials.
+            raise NarrativeUnavailable(
+                f"Gradient agent request failed: HTTP {resp.status_code}: {resp.text[:300]}"
+            )
         data = resp.json()
     except requests.RequestException as error:
         raise NarrativeUnavailable(f"Gradient agent request failed: {error}") from error
