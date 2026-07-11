@@ -47,10 +47,10 @@ checks remain intentionally open until the separate deployment handoff.
 - [ ] Create/select the Knowledge Base, index sources, and attach it to the agent.
 - [ ] Confirm retrieval contains source records for the prepared demo prompt.
 - [ ] Confirm the live application renders retrieved citations.
-- [ ] Confirm serverless fallback behavior if the agent path is intentionally used.
+- [x] Confirm serverless fallback behavior if the agent path is intentionally used.
 - [x] Run live homepage, `/health`, and no-file invalid-upload checks.
-- [ ] Run a valid-upload check with an approved open-consent PGP demo file.
-- [x] Record the live URL and deployment revision: `jellyfish-app-jbnoq.ondigitalocean.app`, commit `2de758b`.
+- [x] Run a valid-upload check with an approved open-consent PGP demo file.
+- [x] Record the live URL and deployment revision: `jellyfish-app-jbnoq.ondigitalocean.app`, commit `b0272fd`.
 
 ## Pitch and submission
 

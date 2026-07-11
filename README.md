@@ -463,6 +463,40 @@ repository.
   - Added `tests/test_comparison.py` (5 tests), `tests/test_population_map.py`
     (5 tests), and `tests/test_app_visualizations.py` (4 Flask integration
     tests). Full suite: `96 passed`.
+- **2026-07-11 — 1000 Genomes hg38 extraction attempt superseded (discontinued):**
+  Started extracting per-chromosome GRCh38 1000 Genomes allele frequencies for
+  the 8 allowlisted trait rsids via a locally downloaded PLINK2 binary (user
+  approved running it this session), to satisfy a request to make the 1000
+  Genomes dataset available to the deployed app. Mid-extraction, found this had
+  already been completed end-to-end on `main` (see the "1000 Genomes runtime
+  reference" and "Privacy-safe closeness API" entries above): a GRCh37 build
+  matching this app's required reference build, all 2,504 samples across 26
+  populations, 19,979 LD-pruned rsIDs, wired into `backend/reference_panel.py`'s
+  `genetic_closeness` field and live-verified in production (see the next entry).
+  Discarded the scratchpad hg38 extraction without merging it — it used a
+  different, incompatible build and would have duplicated already-shipped,
+  more rigorous functionality.
+- **2026-07-11 — Live step-4 verification against the current deployment
+  (completed):** Re-ran the outstanding live valid-upload/refusal/narrative
+  checks against the currently active deployment (commit `b0272fd`, deployment
+  `1f630e84-5642-4bd6-860f-c958efe1270b`), using the approved open-consent v5
+  PGP demo file (`data/samples/genome_Lorena_Sandoval_v5_Full_20260429131650.txt`).
+  `POST /api/analyze` with `population_label=European` returned HTTP 200 with
+  the complete deterministic report (618,277 called markers,
+  `reference_build: GRCh37`) **and** a working `genetic_closeness` result from
+  the newly live 1000 Genomes reference panel: `status: available`, 2,279/19,979
+  markers overlapping, all 26 reference populations ranked (closest: PEL,
+  Peruvian in Lima). Requesting the three off-allowlist rsids (`rs429358`,
+  `rs7412` — APOE; `rs80357906` — BRCA) returned HTTP 200 with all three
+  explicitly refused under the default-deny boundary. `POST /api/narrative`
+  (`interpretation` category) returned HTTP 200 in ~108s via
+  `answer_mode: serverless_fallback` (the agent leg was not reached inside the
+  request window — expected, documented latency behavior) with an accurate,
+  well-grounded answer and an empty `citations` array, which is the documented
+  behavior for the serverless path, not evidence of populated retrieval
+  citations from the agent+Knowledge Base path (that remains a separate open
+  item below). No raw genome bytes were logged or retained by this
+  verification, and no billable evaluation was started.
 
 ## Hard boundaries (by design, not just policy)
 - No ancestry inference — interpretation only.
@@ -543,7 +577,7 @@ npm run build                  # -> aman_frontend/dist; Docker copies it to /app
 
 The App Platform frontend is live at
 [jellyfish-app-jbnoq.ondigitalocean.app](https://jellyfish-app-jbnoq.ondigitalocean.app)
-from active deployment `bf2c8b1b-e958-4732-8dbf-9b8117bc2d23` (commit `2de758b`).
+from active deployment `1f630e84-5642-4bd6-860f-c958efe1270b` (commit `b0272fd`).
 The prepared local artifacts for remaining AI work are `.env.example`,
 `agent/system_prompt.md`, `data/kb_sources/`, `scripts/create_kb.sh`,
 `evals/agent_behavior.jsonl`, and `scripts/run_evals.sh`.
@@ -560,10 +594,13 @@ The prepared local artifacts for remaining AI work are `.env.example`,
       tested, and deployed live 2026-07-11; see Iteration log. Real retrieval
       citations still depend on the (currently empty) Knowledge Base below.
 - [x] Run live homepage, `/health`, and no-file invalid-upload smoke checks.
-- [ ] Run a live valid-upload test with an approved open-consent PGP file, then
+- [x] Run a live valid-upload test with an approved open-consent PGP file, then
       test citations, default-deny refusal, and fallback behavior. Start a
       billable evaluation only with explicit approval and manually review its
-      judge rationales.
+      judge rationales. Done 2026-07-11 against deployment `1f630e84` (commit
+      `b0272fd`) — valid upload, default-deny refusal, and the documented
+      serverless-fallback citations behavior all confirmed live; see Iteration
+      log. No billable evaluation was started.
 
 The deterministic guided report remains the safe demo path if the live agent is
 not verified. It does not require any DigitalOcean credential.
