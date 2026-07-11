@@ -35,7 +35,7 @@ _MARKER_ID_RE = re.compile(r"(?:rs|i)[1-9]\d{0,19}\Z", re.IGNORECASE)
 _GENOTYPE_RE = re.compile(r"[ACGTDI]{1,2}\Z", re.IGNORECASE)
 _POSITION_RE = re.compile(r"[0-9]{1,12}\Z")
 _OFFICIAL_VENDOR_RE = re.compile(
-    r"\b(?:this\s+)?data\s+file\s+(?:was\s+)?generated\s+by\s+23andme\b",
+    r"\b(?:this\s+)?data\s+file\s+(?:(?:was|is)\s+)?generated\s+by\s+23andme\b",
     re.IGNORECASE,
 )
 _OTHER_VENDOR_RE = re.compile(
