@@ -40,6 +40,18 @@ repository.
 
 ## Iteration log
 
+- **2026-07-11 — DigitalOcean credential verifier (started):** Validate and
+  publish the standalone four-check diagnostic for serverless inference,
+  control-plane Knowledge Bases, deployed-agent RAG evidence, and credential
+  wiring without exposing or committing secrets.
+- **2026-07-11 — DigitalOcean credential verifier (completed):** Added the
+  rerunnable `scripts/verify_do.py` diagnostic with fail-closed credential
+  presence checks, Claude-to-Llama inference fallback, Knowledge Base status
+  reporting, agent retrieval/citation inspection, and key-wiring validation.
+  A live run passed inference on `anthropic-claude-4.6-sonnet`, passed the
+  control-plane request with zero visible KBs, returned a grounded agent answer
+  with retrieval/citation evidence (`FULL PASS`), and confirmed distinct keys and
+  the correct agent hostname. No secret values are printed or committed.
 - **2026-07-11 — Local demo completion (started):** Finish every local,
   non-DigitalOcean part of the demo: strict 23andMe validation, in-memory upload
   handling, deterministic report assembly, explicit refusal behavior, broad-label
