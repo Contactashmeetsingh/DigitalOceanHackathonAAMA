@@ -74,8 +74,8 @@ ingested; the source-linked crawler-safe dossier is the supported retrieval path
 
 ## Iteration log
 
-- **2026-07-11 — Immersive Earth → Docker reference dataset (completed
-  locally; release pending):**
+- **2026-07-11 — Immersive Earth → Docker reference dataset (completed and
+  live):**
   Traced the production reference path and confirmed Docker ships
   `data/reference/phase3_reference.json.gz`, while `/api/analyze` exposes its
   privacy-safe result as `genetic_closeness`. Added a renderer-safe adapter so
@@ -89,7 +89,15 @@ ingested; the source-linked crawler-safe dossier is the supported retrieval path
   GRCh37 with 2,504 samples, 26 populations, and 19,979 variants. Posting the
   approved open-consent PGP v5 fixture to that container returned HTTP 200,
   `genetic_closeness.status=available`, 26 rows, and 2,279 usable markers.
-  DigitalOcean activation and its matching live smoke remain.
+  Commit `361d65b` activated in App Platform deployment
+  `e3f80bc1-8f1f-4407-8134-6162904ad9a6`; the same approved fixture then
+  returned those exact counts from the live API, and the deployed main,
+  stylesheet, Globe.gl, and Three.js chunks all returned HTTP 200. A separate
+  concurrent Gradient request briefly monopolized the app's single sync
+  worker and produced a temporary no-healthy-upstream response; the service
+  recovered without intervention and the repeated health/API/static smoke
+  passed. That capacity concern belongs to the backend/DigitalOcean follow-up,
+  not the Earth data adapter.
 
 - **2026-07-11 — Full-viewport Globe.gl Earth experience (completed and live):**
   Added a new isolated `ImmersiveEarth` component based on the supplied

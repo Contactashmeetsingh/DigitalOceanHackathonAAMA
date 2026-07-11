@@ -66,7 +66,16 @@ publishing checks remain intentionally open until the final targeted index.
 - [x] Confirm serverless fallback behavior if the agent path is intentionally used.
 - [x] Run live homepage, `/health`, and no-file invalid-upload checks.
 - [x] Run a valid-upload check with an approved open-consent PGP demo file.
-- [x] Record the live URL and deployment revision: `jellyfish-app-jbnoq.ondigitalocean.app`, commit `3175db3` (deployment `048054f5`).
+- [x] Live Earth dataset proof: the approved fixture returned
+      `genetic_closeness.status=available`, 26 ranked rows, 2,504 reference
+      samples, 19,979 panel variants, and 2,279 usable markers; the deployed
+      response passed the frontend adapter unchanged.
+- [x] Record the live URL and Earth deployment revision:
+      `jellyfish-app-jbnoq.ondigitalocean.app`, commit `361d65b` (deployment
+      `e3f80bc1`).
+- [ ] Address the observed single-sync-worker availability risk: one concurrent
+      90-second Gradient request temporarily made health/static requests return
+      no-healthy-upstream before the service recovered.
 
 ## Pitch and submission
 
