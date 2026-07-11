@@ -29,8 +29,9 @@ directly.
 - **Local development:** Vite runs on `http://localhost:5173` and proxies
   `/api/*` and `/health` to Flask. The proxy target is `BACKEND_URL` when set,
   otherwise `http://localhost:8080`.
-- **Production:** the Docker build compiles Vite to `frontend/dist`, then the
-  Flask/Gunicorn service serves that bundle and the API from the same
+- **Production:** the Docker build compiles the `aman_frontend/` Vite source,
+  copies its `dist/` artifact to `/app/frontend/dist`, then the Flask/Gunicorn
+  service serves that bundle and the API from the same
   DigitalOcean App Platform origin on port 8080. App Platform terminates public
   HTTPS and checks `/health`.
 

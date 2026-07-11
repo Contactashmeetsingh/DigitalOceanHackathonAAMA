@@ -23,7 +23,7 @@ repository.
 - **Write back:** After every change, check, test, design decision, or blocker,
   add a concise dated entry to the iteration log and update any affected
   checklist/status item. Do not leave completed work only in chat.
-- **Frontend owner (Codex):** Owns `frontend/` UX, visual design, accessibility,
+- **Frontend owner (Codex):** Owns `aman_frontend/` UX, visual design, accessibility,
   responsive behavior, frontend tests, and frontend-facing documentation.
 - **Backend/DigitalOcean owner (separate coding agent):** Owns API behavior,
   parsing/report logic, Gradient AI, Knowledge Base, credentials, App Platform,
@@ -51,6 +51,15 @@ repository.
 
 ## Iteration log
 
+- **2026-07-11 — Concurrent frontend-directory rename recovery (in
+  progress):** A concurrently pushed commit renamed the Vite source from
+  `frontend/` to `aman_frontend/` but left the production Dockerfile and current
+  documentation pointing at the deleted path, which would make the next App
+  Platform build fail before compilation. Preserved that commit and its bundled
+  design tooling, updated only the source-copy/build commands and current docs,
+  and added a narrow `.dockerignore` so local editor-skill packages and genome
+  samples never enter the container build context. Container validation remains
+  before this repair is marked complete.
 - **2026-07-11 — Report-grounded visualization handoff (in progress):** The
   frontend now has a renderer-safe adapter for the implemented
   `/api/comparison-cohort` contract. It clusters the returned synthetic cohort
@@ -430,10 +439,10 @@ agent/deployment extension.
 
 Frontend (React + Vite):
 ```bash
-cd frontend && npm install
+cd aman_frontend && npm install
 npm run dev                    # dev server on http://localhost:5173, proxies /api to Flask
 npm test                       # frontend data/interaction tests
-npm run build                  # -> frontend/dist, served by Flask at /
+npm run build                  # -> aman_frontend/dist; Docker copies it to /app/frontend/dist
 ```
 
 ## Build status
@@ -442,6 +451,8 @@ npm run build                  # -> frontend/dist, served by Flask at /
 
 - [ ] Four-surface frontend redesign is implemented and visually verified at
       desktop and mobile widths.
+- [ ] App Platform Docker build follows the `aman_frontend/` source rename and
+      still places the production bundle at Flask's `/app/frontend/dist` path.
 - [ ] Report-grounded comparison and population-map responses render their
       backend-provided disclaimers/citations and retain safe preview fallbacks.
 - [x] Frontend/backend integration contract documents current endpoints and
@@ -538,8 +549,8 @@ any bracketed Gradient AI claims must be filled only after their separate checks
 ```bash
 python -m pip check
 python -m pytest -q
-npm --prefix frontend test
-npm --prefix frontend run build
+npm --prefix aman_frontend test
+npm --prefix aman_frontend run build
 bash -n scripts/create_kb.sh scripts/run_evals.sh scripts/smoke_frontend_api.sh
 scripts/create_kb.sh --list >/dev/null
 scripts/run_evals.sh --check

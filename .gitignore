@@ -244,3 +244,6 @@ __marimo__/
 "!data/sample_genome.txt" 
 
 .agent
+
+
+all_hg38.pgen.zst

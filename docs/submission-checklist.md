@@ -5,6 +5,8 @@ checks remain intentionally open until the separate deployment handoff.
 
 ## Local product
 
+- [ ] Container build succeeds after the Vite source rename to
+      `aman_frontend/`, while Flask still receives `/app/frontend/dist`.
 - [ ] YC-inspired four-surface shell renders overview, trait network, 3D globe,
       and research workspace at desktop and mobile widths. Desktop production-
       build structure/controls and the rebuilt WebGL fallback pass automated
