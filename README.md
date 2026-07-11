@@ -118,6 +118,17 @@ repository.
   secret-free `scripts/smoke_frontend_api.sh`; syntax, mocked endpoint behavior,
   and focused Flask validation checks pass without uploading a genome or
   invoking a model.
+- **2026-07-11 — 1000 Genomes runtime reference (completed):** Downloaded the
+  user-specified PLINK 2 build-37 Phase 3 PGEN/PVAR/PSAM files and official IGSR
+  population descriptions outside Git; verified 84,805,772 variants and 2,504
+  samples across 26 population labels. Added a reproducible pipeline for 19,979
+  common, non-palindromic, LD-pruned rsID SNPs and a 1.2 MB compressed runtime
+  frequency artifact with input checksums, exact sample counts, approximate
+  source-description map anchors, and a three-dimensional population-frequency
+  MDS layout. Leave-one-out validation on the reference samples reached 99.24%
+  superpopulation agreement with all 20,000 selected markers and 99.28% over
+  the 2,841-marker open-consent v4-chip overlap; this is validation of the
+  aggregate distance instrument, not authorization to infer a user's identity.
 - **2026-07-11 — DigitalOcean credential verifier (started):** Validate and
   publish the standalone four-check diagnostic for serverless inference,
   control-plane Knowledge Bases, deployed-agent RAG evidence, and credential
