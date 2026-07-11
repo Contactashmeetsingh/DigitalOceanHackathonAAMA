@@ -24,9 +24,17 @@ publishing checks remain intentionally open until the final targeted index.
       desktop/mobile and no-WebGL fallback layouts were also checked locally.
       Released through commit `3175db3`, deployment `048054f5`; live health,
       validation, Earth-geometry, and lazy Globe.gl-chunk checks pass.
+- [x] After a valid analysis, the immersive Earth prioritizes
+      `/api/analyze` → `genetic_closeness` from the Docker-shipped 1000 Genomes
+      Phase 3 panel: all 26 populations retain backend rank, RMS distance,
+      reference N, source metadata, and approximate official-description map
+      anchors. `/api/population-map` remains the safe fallback. Null/withheld
+      distances cannot become zero. The 30 frontend tests, production build,
+      clean Docker build, and container-level approved-PGP upload pass.
 - [x] Frontend/backend integration contract is documented and locally checked,
-      including the `/api/comparison-cohort` and `/api/population-map`
-      endpoint specs for the trait-network and 3D globe surfaces.
+      including `/api/comparison-cohort`, primary
+      `/api/analyze.genetic_closeness`, and fallback `/api/population-map`
+      contracts for the trait-network and 3D globe surfaces.
 - [x] Full Python test suite passes (104 tests, including deployment-artifact,
       current 23andMe header, reference-panel,
       `backend/comparison.py`, `backend/population_map.py`, and their routes).

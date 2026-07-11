@@ -74,6 +74,23 @@ ingested; the source-linked crawler-safe dossier is the supported retrieval path
 
 ## Iteration log
 
+- **2026-07-11 — Immersive Earth → Docker reference dataset (completed
+  locally; release pending):**
+  Traced the production reference path and confirmed Docker ships
+  `data/reference/phase3_reference.json.gz`, while `/api/analyze` exposes its
+  privacy-safe result as `genetic_closeness`. Added a renderer-safe adapter so
+  the immersive Earth now prioritizes those 26 Phase 3 populations, exact
+  reference sample counts, upload-specific RMS distance/rank, overlap metadata,
+  official-description map anchors, caveats, and sources. The separate
+  `/api/population-map` trait model remains only as a fallback. No marker list,
+  genotype, inferred location, or ancestry percentage reaches the globe. All
+  30 frontend tests, all 104 Python tests, the Vite production build,
+  `git diff --check`, and a clean Docker build pass. The built image contains
+  GRCh37 with 2,504 samples, 26 populations, and 19,979 variants. Posting the
+  approved open-consent PGP v5 fixture to that container returned HTTP 200,
+  `genetic_closeness.status=available`, 26 rows, and 2,279 usable markers.
+  DigitalOcean activation and its matching live smoke remain.
+
 - **2026-07-11 — Full-viewport Globe.gl Earth experience (completed and live):**
   Added a new isolated `ImmersiveEarth` component based on the supplied
   `globe.gl` repository. The section fills the viewport below the sticky header,
@@ -655,7 +672,7 @@ npm run build                  # -> aman_frontend/dist; Docker copies it to /app
   Pakistani subset, unassigned count, methodology caveat, and integrity tests.
 - Dated research bridge with participation, status, consent/privacy context, and
   official sources.
-- Real open-consent PGP v3/v4/v5 API validation, 104 Python tests, 26 Node
+- Real open-consent PGP v3/v4/v5 API validation, 104 Python tests, 30 Node
   data/interaction tests, a successful production build, and local visual QA.
 - [x] `/api/comparison-cohort` (synthetic, cited cohort graph) and
       `/api/population-map` (real, cited reference populations) backend

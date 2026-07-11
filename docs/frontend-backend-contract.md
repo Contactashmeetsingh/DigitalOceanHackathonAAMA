@@ -17,7 +17,7 @@ passthrough — see "Explicitly not implemented" below.
 |---|---|---|
 | YC-style visual overhaul (shell, typography, layout) | none | Pure frontend/visual — no new data, no backend change implied. |
 | 3D force-graph "compare to 100+ profiles" | `POST /api/comparison-cohort` | Synthetic-but-cited cohort; see below. |
-| 3D globe "where you stand" / cross-country DNA framing | `POST /api/population-map` | Real named reference populations; see below. |
+| 3D globe / reference-distance Earth | `POST /api/analyze` → `genetic_closeness` (primary); `POST /api/population-map` (fallback) | Docker-shipped 1000 Genomes Phase 3 distances, reference N, and approximate official-description anchors; see below. |
 | Research + chat AI | `POST /api/narrative` (existing, unchanged) | Still exactly the six fixed categories — no new free-text endpoint was added for this pass. |
 
 ## One origin in development and production
@@ -90,9 +90,21 @@ does not require a DigitalOcean key or a live model.
 
 Success: HTTP 200. The response contains `filename`, `vendor`, `chip_version`,
 `reference_build`, `stats`, `retention`, `report_version`, `coverage`,
-`population_context`, `traits`, `boundaries`, `transparency`, and `studies`.
+`population_context`, `traits`, `boundaries`, `transparency`, `studies`, and
+`genetic_closeness`.
 Consumers should tolerate new additive fields and should treat documented
 nullable values, such as an unknown chip version, as normal.
+
+`genetic_closeness` is the immersive Earth's primary dataset. It is computed
+from the Docker-shipped `data/reference/phase3_reference.json.gz` artifact and
+contains 26 public aggregate population rows with `code`, official `name`,
+`superpopulation`, `sample_count`, `thin_reference`, approximate `location`,
+upload-specific RMS `distance`, and `rank`. The envelope also carries the
+overlap count, panel size, method, caveats, and source URLs. It never returns
+the selected marker list or uploaded genotypes. The globe must show distance as
+a relative audit metric—not an ancestry percentage, ethnicity, residence, or
+identity assignment. If status is not `available`, keep the reference geography
+but label distance/rank as withheld.
 
 The upload is read into the in-memory request path. The response deliberately
 does not include the raw file, a full SNP/genotype collection, or unretained
@@ -227,7 +239,9 @@ Stable application errors: `400 missing_report` (same shape as `/api/narrative`)
 
 ### `POST /api/population-map`
 
-Backs the 3D globe "where you stand" view. Pair it with `globe.gl` (same
+Provides the immersive globe's fallback trait-model view when a completed
+`/api/analyze` response does not contain usable `genetic_closeness`. Pair it
+with `globe.gl` (same
 author/rendering stack as `3d-force-graph`, built for exactly this: real
 lat/lon markers on a WebGL globe), not `3d-force-graph` itself, which is a
 node-link graph library without globe/basemap support. Consumes the same

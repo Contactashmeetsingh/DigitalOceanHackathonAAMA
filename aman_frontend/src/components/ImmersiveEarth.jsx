@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { safeExternalUrl } from "../api.js";
 import { buildImmersiveEarthData, immersiveEarthMetric } from "../immersiveEarthData.js";
+import { buildReferenceEarth } from "../referenceEarthData.js";
 import { buildPopulationGlobe, DEMO_GLOBE, VISUALIZATION_SAFETY } from "../visualizationData.js";
 import "./ImmersiveEarth.css";
 
@@ -15,7 +16,11 @@ function applyScene(globe, scene, selectedId) {
     .pointLng("lng")
     .pointColor((point) => point.kind === "residence" ? "#ffffff" : point.color)
     .pointAltitude((point) => point.id === selected ? 0.09 : point.kind === "residence" ? 0.065 : 0.035)
-    .pointRadius((point) => point.id === selected ? 0.34 : point.kind === "residence" ? 0.25 : 0.17)
+    .pointRadius((point) => {
+      if (point.id === selected) return 0.34;
+      if (point.kind === "residence") return 0.25;
+      return 0.14 + Math.min(0.11, Math.sqrt(point.sampleCount || 0) / 90);
+    })
     .pointResolution(18)
     .pointsTransitionDuration(420)
     .pointLabel(() => "")
@@ -46,6 +51,7 @@ function applyScene(globe, scene, selectedId) {
 export default function ImmersiveEarth({
   populationLabel = "",
   populationMapData = null,
+  geneticCloseness = null,
   dataStatus = null,
 }) {
   const mountRef = useRef(null);
@@ -55,9 +61,11 @@ export default function ImmersiveEarth({
   const [selectedId, setSelectedId] = useState("");
   const [hoveredId, setHoveredId] = useState("");
 
-  const referenceMap = useMemo(() => buildPopulationGlobe(populationMapData), [populationMapData]);
-  const globeData = referenceMap || DEMO_GLOBE;
-  const isReferenceMap = Boolean(referenceMap);
+  const distanceMap = useMemo(() => buildReferenceEarth(geneticCloseness), [geneticCloseness]);
+  const traitMap = useMemo(() => buildPopulationGlobe(populationMapData), [populationMapData]);
+  const globeData = distanceMap || traitMap || DEMO_GLOBE;
+  const isDistanceMap = Boolean(distanceMap);
+  const isReferenceMap = Boolean(distanceMap || traitMap);
   const scene = useMemo(() => buildImmersiveEarthData(globeData), [globeData]);
   const activePoint = scene.points.find((point) => point.id === (hoveredId || selectedId))
     || scene.regions[0]
@@ -227,28 +235,40 @@ export default function ImmersiveEarth({
       <div className="immersive-earth-shade" aria-hidden="true" />
 
       <header className="immersive-earth-copy">
-        <p className="immersive-earth-kicker"><span>02</span> Reference Earth</p>
-        <h2 id="immersive-earth-heading">See the reference world at full scale.</h2>
+        <p className="immersive-earth-kicker"><span>02</span> {isDistanceMap ? "1000 Genomes Earth" : "Reference Earth"}</p>
+        <h2 id="immersive-earth-heading">
+          {isDistanceMap ? "Explore your reference distances at full scale." : "See the reference world at full scale."}
+        </h2>
         <p>
-          Rotate a globe of public reference-panel locations. Coordinates describe where samples
-          were collected—not where your DNA says you belong.
+          {isDistanceMap
+            ? "Rotate all 26 populations from the Docker-shipped Phase 3 panel. Color shows this upload's relative distance rank; point size shows reference N. Neither assigns ancestry or identity."
+            : "Rotate a globe of public reference-panel locations. Coordinates describe where samples were collected—not where your DNA says you belong."}
         </p>
       </header>
 
       <div className="immersive-earth-status" aria-live="polite">
         <span className={`earth-status-dot ${renderState}`} />
         <div>
-          <small>{isReferenceMap ? "Report-grounded view" : "Safe preview"}</small>
-          <strong>{renderState === "fallback" ? "Accessible map mode" : `${scene.regions.length} reference locations`}</strong>
+          <small>{isDistanceMap ? "Docker reference online" : isReferenceMap ? "Report-grounded view" : "Safe preview"}</small>
+          <strong>{renderState === "fallback"
+            ? "Accessible map mode"
+            : isDistanceMap
+              ? `${globeData.meta.referenceSampleCount?.toLocaleString() || "2,504"} samples · ${scene.regions.length} populations`
+              : `${scene.regions.length} reference locations`}</strong>
         </div>
       </div>
 
-      {dataStatus?.status === "loading" && (
+      {!isDistanceMap && dataStatus?.status === "loading" && (
         <p className="immersive-earth-notice" role="status">Loading cited reference populations…</p>
       )}
-      {dataStatus?.status === "error" && (
+      {!isDistanceMap && dataStatus?.status === "error" && (
         <p className="immersive-earth-notice warning" role="status">
           Live reference data is unavailable; showing the labeled preview.
+        </p>
+      )}
+      {isDistanceMap && !globeData.meta.available && (
+        <p className="immersive-earth-notice warning" role="status">
+          {globeData.meta.message || "Distances are withheld for this upload; the Docker reference geography remains available."}
         </p>
       )}
 

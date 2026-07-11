@@ -427,6 +427,7 @@ export default function App() {
         <ImmersiveEarth
           populationLabel={result?.submittedPopulationLabel || populationLabel.trim()}
           populationMapData={populationMapData}
+          geneticCloseness={result?.data?.genetic_closeness}
           dataStatus={populationMapStatus}
         />
 
