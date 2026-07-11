@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { analyzeGenome } from "./api.js";
+import { analyzeGenome, requestComparisonCohort, requestPopulationMap } from "./api.js";
+import AncestryGlobe from "./components/AncestryGlobe.jsx";
 import ResearchWorkspace from "./components/ResearchWorkspace.jsx";
+import TraitNetwork from "./components/TraitNetwork.jsx";
 import { TOPMED_PANEL } from "./referencePanelData.js";
 import {
   clamp,
@@ -134,12 +136,68 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null); // { data } | { error }
   const [fileError, setFileError] = useState("");
+  const [cohortData, setCohortData] = useState(null);
+  const [cohortStatus, setCohortStatus] = useState(null);
+  const [populationMapData, setPopulationMapData] = useState(null);
+  const [populationMapStatus, setPopulationMapStatus] = useState(null);
   const inputRef = useRef(null);
   const resultRef = useRef(null);
+  const visualGenerationRef = useRef(0);
 
   useEffect(() => {
     if (result && resultRef.current) resultRef.current.focus();
   }, [result]);
+
+  useEffect(() => {
+    const report = result?.data || null;
+    visualGenerationRef.current += 1;
+    const generation = visualGenerationRef.current;
+    setCohortData(null);
+    setPopulationMapData(null);
+    if (!report) {
+      setCohortStatus(null);
+      setPopulationMapStatus(null);
+      return undefined;
+    }
+
+    const cohortController = new AbortController();
+    const mapController = new AbortController();
+    setCohortStatus({ status: "loading" });
+    setPopulationMapStatus({ status: "loading" });
+
+    requestComparisonCohort({ report, signal: cohortController.signal })
+      .then((payload) => {
+        if (generation !== visualGenerationRef.current) return;
+        setCohortData(payload);
+        setCohortStatus({ status: "ready" });
+      })
+      .catch((error) => {
+        if (cohortController.signal.aborted || generation !== visualGenerationRef.current) return;
+        setCohortStatus({
+          status: "error",
+          error: error instanceof Error ? error.message : "The cohort service is unavailable.",
+        });
+      });
+
+    requestPopulationMap({ report, signal: mapController.signal })
+      .then((payload) => {
+        if (generation !== visualGenerationRef.current) return;
+        setPopulationMapData(payload);
+        setPopulationMapStatus({ status: "ready" });
+      })
+      .catch((error) => {
+        if (mapController.signal.aborted || generation !== visualGenerationRef.current) return;
+        setPopulationMapStatus({
+          status: "error",
+          error: error instanceof Error ? error.message : "The population-map service is unavailable.",
+        });
+      });
+
+    return () => {
+      cohortController.abort();
+      mapController.abort();
+    };
+  }, [result?.data]);
 
   function pickFile(candidate) {
     if (!canReplaceSelectedFile(loading)) return;
@@ -209,6 +267,8 @@ export default function App() {
             <span>Ancestry <strong>Audit</strong></span>
           </a>
           <nav className="site-nav" aria-label="Product sections">
+            <a href="#compare">Trait network</a>
+            <a href="#atlas">Earth map</a>
             <a href="#instrument">Reference distance</a>
             <a href="#research">Research</a>
             <a href="#evidence">Evidence</a>
@@ -357,6 +417,18 @@ export default function App() {
             </aside>
           </div>
         </section>
+
+        <TraitNetwork
+          reportData={result?.data}
+          cohortData={cohortData}
+          dataStatus={cohortStatus}
+        />
+
+        <AncestryGlobe
+          populationLabel={result?.submittedPopulationLabel || populationLabel.trim()}
+          populationMapData={populationMapData}
+          dataStatus={populationMapStatus}
+        />
 
         <ResearchWorkspace reportData={result?.data} />
 
