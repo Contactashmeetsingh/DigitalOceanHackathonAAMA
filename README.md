@@ -74,7 +74,7 @@ ingested; the source-linked crawler-safe dossier is the supported retrieval path
 
 ## Iteration log
 
-- **2026-07-11 — Full-viewport Globe.gl Earth experience (completed locally):**
+- **2026-07-11 — Full-viewport Globe.gl Earth experience (completed and live):**
   Added a new isolated `ImmersiveEarth` component based on the supplied
   `globe.gl` repository. The section fills the viewport below the sticky header,
   lazy-loads WebGL, renders local Natural Earth country geometry, supports
@@ -89,8 +89,11 @@ ingested; the source-linked crawler-safe dossier is the supported retrieval path
   camera. The Globe.gl engine remains lazy-loaded outside the initial bundle.
   A clean production Docker build also passes with a 2.12 MB build context; the
   supplied `globe.gl/` reference clone is excluded from that context because the
-  app uses the pinned npm package. DigitalOcean activation and live smoke
-  verification remain.
+  app uses the pinned npm package. App Platform deployment
+  `048054f5-068d-44cb-853e-4a6310a18ba7` activated commit `3175db3`; the live
+  health/validation smoke passed without a genome or model request, and the
+  deployed 488 KB Earth geometry plus 514 KB lazy Globe.gl chunk both return
+  HTTP 200.
 
 - **2026-07-11 — Single-frontend Google-color release (completed locally):**
   Removed the redundant generated `frontend/` tree so `aman_frontend/` is the
@@ -663,10 +666,10 @@ npm run build                  # -> aman_frontend/dist; Docker copies it to /app
 
 The App Platform frontend is live at
 [jellyfish-app-jbnoq.ondigitalocean.app](https://jellyfish-app-jbnoq.ondigitalocean.app)
-from last verified deployment `c163c596-66e2-4e57-823d-c3567d3fd80f`
-(commit `d87b13e`, ACTIVE, superseding the Google-color release `e6d7693`)
-with deploy-on-push from `origin/main`. The final visual smoke check for the
-now-mounted trait-network/globe surfaces remains in the release steps above.
+from verified deployment `048054f5-068d-44cb-853e-4a6310a18ba7`
+(commit `3175db3`, ACTIVE) with deploy-on-push from `origin/main`. The immersive
+Earth release passed live health, validation-error, static-geometry, and lazy
+Globe.gl-chunk checks; no genome was uploaded and no model request was sent.
 The prepared local artifacts for remaining AI work are `.env.example`,
 `agent/system_prompt.md`, `data/kb_sources/`, `scripts/create_kb.sh`,
 `evals/agent_behavior.jsonl`, and `scripts/run_evals.sh`.

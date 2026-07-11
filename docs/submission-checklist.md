@@ -22,6 +22,8 @@ publishing checks remain intentionally open until the final targeted index.
       frontend tests and the production build pass. Hardware-accelerated Chrome
       rendered the real scene and verified reference selection/camera movement;
       desktop/mobile and no-WebGL fallback layouts were also checked locally.
+      Released through commit `3175db3`, deployment `048054f5`; live health,
+      validation, Earth-geometry, and lazy Globe.gl-chunk checks pass.
 - [x] Frontend/backend integration contract is documented and locally checked,
       including the `/api/comparison-cohort` and `/api/population-map`
       endpoint specs for the trait-network and 3D globe surfaces.
@@ -56,7 +58,7 @@ publishing checks remain intentionally open until the final targeted index.
 - [x] Confirm serverless fallback behavior if the agent path is intentionally used.
 - [x] Run live homepage, `/health`, and no-file invalid-upload checks.
 - [x] Run a valid-upload check with an approved open-consent PGP demo file.
-- [x] Record the live URL and deployment revision: `jellyfish-app-jbnoq.ondigitalocean.app`, commit `d87b13e` (deployment `c163c596`).
+- [x] Record the live URL and deployment revision: `jellyfish-app-jbnoq.ondigitalocean.app`, commit `3175db3` (deployment `048054f5`).
 
 ## Pitch and submission
 
