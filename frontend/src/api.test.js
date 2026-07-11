@@ -4,7 +4,9 @@ import test from "node:test";
 import {
   ApiError,
   NARRATIVE_CATEGORIES,
+  requestComparisonCohort,
   requestNarrative,
+  requestPopulationMap,
   safeExternalUrl,
 } from "./api.js";
 
@@ -53,6 +55,79 @@ test("requestNarrative preserves stable API errors", async () => {
     (error) => error instanceof ApiError
       && error.status === 502
       && error.code === "narrative_unavailable",
+  );
+});
+
+test("visualization helpers post only the analyzed report to same-origin routes", async () => {
+  const calls = [];
+  const report = { report_version: "1", stats: { called: 42 } };
+  const fetchImpl = async (path, options) => {
+    calls.push({ path, options });
+    return {
+      ok: true,
+      status: 200,
+      json: async () => path.endsWith("comparison-cohort")
+        ? { nodes: [{ id: "you" }], links: [] }
+        : { populations: [], you_marker: null },
+    };
+  };
+
+  await Promise.all([
+    requestComparisonCohort({ report, fetchImpl }),
+    requestPopulationMap({ report, fetchImpl }),
+  ]);
+
+  assert.deepEqual(calls.map(({ path }) => path), [
+    "/api/comparison-cohort",
+    "/api/population-map",
+  ]);
+  for (const { options } of calls) {
+    assert.equal(options.method, "POST");
+    assert.equal(options.headers["Content-Type"], "application/json");
+    assert.deepEqual(JSON.parse(options.body), { report });
+  }
+});
+
+test("visualization helpers reject missing reports before making a request", async () => {
+  let requestCount = 0;
+  const fetchImpl = async () => {
+    requestCount += 1;
+  };
+
+  await assert.rejects(
+    requestComparisonCohort({ report: null, fetchImpl }),
+    (error) => error instanceof ApiError && error.code === "missing_report",
+  );
+  await assert.rejects(
+    requestPopulationMap({ report: [], fetchImpl }),
+    (error) => error instanceof ApiError && error.code === "missing_report",
+  );
+  assert.equal(requestCount, 0);
+});
+
+test("visualization helpers reject malformed success payloads", async () => {
+  await assert.rejects(
+    requestComparisonCohort({
+      report: {},
+      fetchImpl: async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({ nodes: "not-an-array", links: [] }),
+      }),
+    }),
+    (error) => error instanceof ApiError && error.code === "invalid_response",
+  );
+
+  await assert.rejects(
+    requestPopulationMap({
+      report: {},
+      fetchImpl: async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({ populations: null }),
+      }),
+    }),
+    (error) => error instanceof ApiError && error.code === "invalid_response",
   );
 });
 

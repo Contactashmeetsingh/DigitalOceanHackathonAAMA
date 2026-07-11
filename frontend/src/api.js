@@ -74,6 +74,32 @@ async function jsonRequest(path, options, fetchImpl) {
   return payload;
 }
 
+function reportRequest(path, { report, signal, fetchImpl = globalThis.fetch }, validatePayload) {
+  if (!report || typeof report !== "object" || Array.isArray(report)) {
+    return Promise.reject(new ApiError("Analyze a file before loading report-grounded visualization data.", {
+      code: "missing_report",
+    }));
+  }
+
+  return jsonRequest(
+    path,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ report }),
+      signal,
+    },
+    fetchImpl,
+  ).then((payload) => {
+    if (!validatePayload(payload)) {
+      throw new ApiError("The visualization service returned an unexpected response.", {
+        code: "invalid_response",
+      });
+    }
+    return payload;
+  });
+}
+
 export function analyzeGenome({ file, populationLabel = "", signal, fetchImpl = globalThis.fetch }) {
   if (!file) {
     return Promise.reject(new ApiError("Choose a 23andMe raw-data file before analyzing.", {
@@ -110,6 +136,29 @@ export function requestNarrative({ category, report, signal, fetchImpl = globalT
       signal,
     },
     fetchImpl,
+  );
+}
+
+export function requestComparisonCohort({ report, signal, fetchImpl = globalThis.fetch }) {
+  return reportRequest(
+    "/api/comparison-cohort",
+    { report, signal, fetchImpl },
+    (payload) => payload
+      && typeof payload === "object"
+      && !Array.isArray(payload)
+      && Array.isArray(payload.nodes)
+      && Array.isArray(payload.links),
+  );
+}
+
+export function requestPopulationMap({ report, signal, fetchImpl = globalThis.fetch }) {
+  return reportRequest(
+    "/api/population-map",
+    { report, signal, fetchImpl },
+    (payload) => payload
+      && typeof payload === "object"
+      && !Array.isArray(payload)
+      && Array.isArray(payload.populations),
   );
 }
 

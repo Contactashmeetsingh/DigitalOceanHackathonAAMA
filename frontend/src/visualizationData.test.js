@@ -5,6 +5,8 @@ import {
   DEMO_GLOBE,
   TRAIT_CATEGORIES,
   VISUALIZATION_SAFETY,
+  buildComparisonNetwork,
+  buildPopulationGlobe,
   buildTraitNetwork,
   deriveTraitHubData,
 } from "./visualizationData.js";
@@ -158,4 +160,81 @@ test("network and globe metadata explicitly state the synthetic DNA safety bound
     assert.match(meta.copy, /identit(?:y|ies) and locations/i);
     assert.match(meta.copy, /never derived or inferred from DNA/i);
   }
+});
+
+test("cohort API adapter clusters synthetic profiles while stripping every genotype", () => {
+  const apiPayload = {
+    nodes: [
+      { id: "you", is_user: true, traits: { rs4988235: "PRIVATE-USER-CALL" } },
+      { id: "cohort-1", label: "Illustrative profile 1", is_synthetic: true, group: "european", traits: { rs4988235: "PRIVATE-SYNTHETIC-CALL" } },
+      { id: "cohort-2", label: "Illustrative profile 2", is_synthetic: true, group: "south_asian", traits: { rs4988235: "PRIVATE-SYNTHETIC-CALL" } },
+    ],
+    links: [
+      { source: "you", target: "cohort-1", value: 0.75 },
+      { source: "you", target: "cohort-2", value: 0.5 },
+    ],
+    disclaimer: "All comparison nodes are synthetic.",
+    citations: [{ label: "Source", url: "https://example.org/source" }],
+  };
+
+  const graph = buildComparisonNetwork(apiPayload, REPORT_FIXTURE);
+  assert.equal(graph.meta.source, "report-grounded-synthetic-cohort-api");
+  assert.equal(graph.meta.profileCount, 2);
+  assert.equal(graph.nodes.find((node) => node.id === "cohort-1").match, 75);
+  assert.deepEqual(graph.meta.categories.map(({ id }) => id), ["european", "south_asian"]);
+  assert.doesNotMatch(JSON.stringify(graph), /PRIVATE-USER-CALL|PRIVATE-SYNTHETIC-CALL/);
+});
+
+test("invalid cohort API data fails safely to the deterministic local preview", () => {
+  const graph = buildComparisonNetwork({ nodes: [], links: [] }, REPORT_FIXTURE);
+  assert.equal(graph.meta.source, "deterministic-local-preview");
+  assert.equal(graph.meta.profileCount, 128);
+});
+
+test("population API adapter preserves cited coordinates but strips unrelated fields", () => {
+  const globe = buildPopulationGlobe({
+    populations: [
+      {
+        id: "GBR",
+        label: "British in England and Scotland",
+        country: "United Kingdom",
+        lat: 54,
+        lon: -2,
+        group: "european",
+        expected_similarity: 0.625,
+        source: "https://example.org/panel",
+        private_genotype: "DO-NOT-RENDER",
+      },
+    ],
+    you_marker: { population_id: "GBR", label: "European", source: "user_supplied_label" },
+    disclaimer: "Reference panels do not locate or classify the uploader.",
+    citations: [{ label: "Panel", url: "https://example.org/panel" }],
+  });
+
+  assert.equal(globe.meta.source, "report-grounded-population-map-api");
+  assert.equal(globe.regions[0].lng, -2);
+  assert.equal(globe.regions[0].modelScore, 63);
+  assert.equal(globe.residence.label, "European");
+  assert.equal(globe.residence.source, "user-supplied-label");
+  assert.doesNotMatch(JSON.stringify(globe), /DO-NOT-RENDER/);
+});
+
+test("population API adapter rejects an empty or malformed map", () => {
+  assert.equal(buildPopulationGlobe(null), null);
+  assert.equal(buildPopulationGlobe({ populations: [] }), null);
+});
+
+test("population API adapter keeps a missing modeled score distinct from zero", () => {
+  const globe = buildPopulationGlobe({
+    populations: [{
+      id: "GBR",
+      label: "British in England and Scotland",
+      country: "United Kingdom",
+      lat: 54,
+      lon: -2,
+      group: "european",
+      expected_similarity: null,
+    }],
+  });
+  assert.equal(globe.regions[0].modelScore, null);
 });

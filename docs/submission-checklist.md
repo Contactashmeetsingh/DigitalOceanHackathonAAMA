@@ -6,13 +6,16 @@ checks remain intentionally open until the separate deployment handoff.
 ## Local product
 
 - [ ] YC-inspired four-surface shell renders overview, trait network, 3D globe,
-      and research workspace at desktop and mobile widths.
+      and research workspace at desktop and mobile widths. Desktop production-
+      build structure/controls and the rebuilt WebGL fallback pass automated
+      checks; mobile browser verification remains.
 - [x] Backend endpoints for the trait-network (`/api/comparison-cohort`) and
       globe (`/api/population-map`) surfaces are implemented and return a
       mandatory `disclaimer`/`citations` payload.
 - [ ] Frontend renders the trait-network as explicitly synthetic and the globe
-      as real cited reference populations, using each response's `disclaimer`
-      (frontend-owned; not yet visually verified).
+      as real cited reference populations, using each response's `disclaimer`.
+      Both safe adapters and same-origin API calls are implemented and covered
+      by 21 passing frontend tests; production-build visual verification remains.
 - [x] Frontend/backend integration contract is documented and locally checked,
       including the `/api/comparison-cohort` and `/api/population-map`
       endpoint specs for the trait-network and 3D globe surfaces.

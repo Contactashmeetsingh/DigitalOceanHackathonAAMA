@@ -9,23 +9,44 @@ export default function ResearchWorkspace({ reportData }) {
   const [activeId, setActiveId] = useState("interpretation");
   const [answers, setAnswers] = useState({});
   const lastReportRef = useRef(reportData);
+  const reportGenerationRef = useRef(0);
+  const requestControllersRef = useRef(new Map());
   const active = NARRATIVE_CATEGORIES.find((category) => category.id === activeId);
   const current = answers[activeId];
   const analysisReady = Boolean(reportData);
 
   useEffect(() => {
     if (lastReportRef.current !== reportData) {
+      requestControllersRef.current.forEach((controller) => controller.abort());
+      requestControllersRef.current.clear();
+      reportGenerationRef.current += 1;
       lastReportRef.current = reportData;
       setAnswers({});
     }
   }, [reportData]);
 
+  useEffect(() => () => {
+    requestControllersRef.current.forEach((controller) => controller.abort());
+    requestControllersRef.current.clear();
+  }, []);
+
   async function askQuestion(event) {
     event.preventDefault();
     if (!analysisReady || current?.status === "loading") return;
-    setAnswers((previous) => ({ ...previous, [activeId]: { status: "loading" } }));
+    const categoryId = activeId;
+    const reportAtRequest = reportData;
+    const generationAtRequest = reportGenerationRef.current;
+    requestControllersRef.current.get(categoryId)?.abort();
+    const controller = new AbortController();
+    requestControllersRef.current.set(categoryId, controller);
+    setAnswers((previous) => ({ ...previous, [categoryId]: { status: "loading" } }));
     try {
-      const response = await requestNarrative({ category: activeId, report: reportData });
+      const response = await requestNarrative({
+        category: categoryId,
+        report: reportAtRequest,
+        signal: controller.signal,
+      });
+      if (generationAtRequest !== reportGenerationRef.current || reportAtRequest !== lastReportRef.current) return;
       const citations = Array.isArray(response.citations)
         ? response.citations
           .map((citation) => ({ ...citation, url: safeExternalUrl(citation?.url) }))
@@ -33,20 +54,27 @@ export default function ResearchWorkspace({ reportData }) {
         : [];
       setAnswers((previous) => ({
         ...previous,
-        [activeId]: {
+        [categoryId]: {
           status: "ready",
           content: response.content || "The service returned an empty answer.",
           citations,
         },
       }));
     } catch (error) {
+      if (controller.signal.aborted
+        || generationAtRequest !== reportGenerationRef.current
+        || reportAtRequest !== lastReportRef.current) return;
       setAnswers((previous) => ({
         ...previous,
-        [activeId]: {
+        [categoryId]: {
           status: "error",
           error: error instanceof Error ? error.message : "The research service is unavailable.",
         },
       }));
+    } finally {
+      if (requestControllersRef.current.get(categoryId) === controller) {
+        requestControllersRef.current.delete(categoryId);
+      }
     }
   }
 

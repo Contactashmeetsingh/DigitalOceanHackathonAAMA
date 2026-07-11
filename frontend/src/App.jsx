@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 
-import { analyzeGenome } from "./api.js";
+import {
+  analyzeGenome,
+  requestComparisonCohort,
+  requestPopulationMap,
+} from "./api.js";
 import AncestryGlobe from "./components/AncestryGlobe.jsx";
 import ResearchWorkspace from "./components/ResearchWorkspace.jsx";
 import TraitNetwork from "./components/TraitNetwork.jsx";
@@ -45,6 +49,16 @@ const ANSWER_CATEGORIES = [
     question: "What can this app not responsibly conclude from my file?",
   },
 ];
+
+function emptyVisualizationState() {
+  return { data: null, status: "idle", error: "" };
+}
+
+function visualizationError(error) {
+  return error instanceof Error
+    ? error.message
+    : "This visualization could not be loaded. The evidence report is still available.";
+}
 
 const TRUST_PROMISES = [
   {
@@ -108,6 +122,8 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null); // { data } | { error }
   const [fileError, setFileError] = useState("");
+  const [cohortState, setCohortState] = useState(emptyVisualizationState);
+  const [populationMapState, setPopulationMapState] = useState(emptyVisualizationState);
   const inputRef = useRef(null);
   const resultRef = useRef(null);
 
@@ -118,6 +134,8 @@ export default function App() {
   function pickFile(candidate) {
     if (!canReplaceSelectedFile(loading)) return;
     setResult(null);
+    setCohortState(emptyVisualizationState());
+    setPopulationMapState(emptyVisualizationState());
     setFileError("");
     if (!candidate) {
       setFile(null);
@@ -159,10 +177,26 @@ export default function App() {
     }
     setLoading(true);
     setResult(null);
+    setCohortState(emptyVisualizationState());
+    setPopulationMapState(emptyVisualizationState());
 
     try {
       const data = await analyzeGenome({ file, populationLabel });
       setResult({ data, submittedPopulationLabel: populationLabel.trim() });
+      setCohortState({ data: null, status: "loading", error: "" });
+      setPopulationMapState({ data: null, status: "loading", error: "" });
+
+      const [cohortResult, populationMapResult] = await Promise.allSettled([
+        requestComparisonCohort({ report: data }),
+        requestPopulationMap({ report: data }),
+      ]);
+
+      setCohortState(cohortResult.status === "fulfilled"
+        ? { data: cohortResult.value, status: "ready", error: "" }
+        : { data: null, status: "error", error: visualizationError(cohortResult.reason) });
+      setPopulationMapState(populationMapResult.status === "fulfilled"
+        ? { data: populationMapResult.value, status: "ready", error: "" }
+        : { data: null, status: "error", error: visualizationError(populationMapResult.reason) });
     } catch (error) {
       setResult({
         error: error instanceof Error
@@ -326,14 +360,22 @@ export default function App() {
               </ol>
               <div className={result?.data ? "analysis-state complete" : result?.error ? "analysis-state failed" : "analysis-state"}>
                 <span />
-                <div><small>Report state</small><strong>{result?.data ? "Ready to explore" : result?.error ? "Needs attention" : loading ? "Processing locally" : "Waiting for a file"}</strong></div>
+                <div><small>Report state</small><strong>{result?.data ? "Ready to explore" : result?.error ? "Needs attention" : loading ? "Processing privately" : "Waiting for a file"}</strong></div>
               </div>
             </aside>
           </div>
         </section>
 
-        <TraitNetwork reportData={result?.data} />
-        <AncestryGlobe populationLabel={result?.submittedPopulationLabel || populationLabel.trim()} />
+        <TraitNetwork
+          reportData={result?.data}
+          cohortData={cohortState.data}
+          dataStatus={{ status: cohortState.status, error: cohortState.error }}
+        />
+        <AncestryGlobe
+          populationLabel={result?.submittedPopulationLabel || populationLabel.trim()}
+          populationMapData={populationMapState.data}
+          dataStatus={{ status: populationMapState.status, error: populationMapState.error }}
+        />
         <ResearchWorkspace reportData={result?.data} />
 
         <section

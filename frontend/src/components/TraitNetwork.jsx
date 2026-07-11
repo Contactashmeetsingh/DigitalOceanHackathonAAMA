@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { buildTraitNetwork, TRAIT_CATEGORIES } from "../visualizationData.js";
+import { safeExternalUrl } from "../api.js";
+import { buildComparisonNetwork, TRAIT_CATEGORIES } from "../visualizationData.js";
 
 function endpointId(endpoint) {
   return typeof endpoint === "object" ? endpoint.id : endpoint;
@@ -15,14 +16,70 @@ function supportsWebGL2() {
   }
 }
 
-export default function TraitNetwork({ reportData }) {
+function StaticNetwork({ categories }) {
+  const visibleCategories = categories.length ? categories : TRAIT_CATEGORIES;
+  const center = { x: 430, y: 285 };
+  const clusterRadius = visibleCategories.length === 1 ? 0 : 172;
+
+  return (
+    <svg viewBox="0 0 860 570" role="presentation">
+      <defs>
+        <radialGradient id="network-fallback-glow">
+          <stop offset="0" stopColor="#a978ff" stopOpacity=".26" />
+          <stop offset="1" stopColor="#a978ff" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <circle cx={center.x} cy={center.y} r="165" fill="url(#network-fallback-glow)" />
+      {visibleCategories.map((category, categoryIndex) => {
+        const angle = -Math.PI / 2 + (categoryIndex / visibleCategories.length) * Math.PI * 2;
+        const hubX = center.x + Math.cos(angle) * clusterRadius;
+        const hubY = center.y + Math.sin(angle) * clusterRadius;
+        return (
+          <g key={category.id}>
+            <line x1={center.x} y1={center.y} x2={hubX} y2={hubY} stroke={category.color} strokeOpacity=".28" />
+            {Array.from({ length: 11 }, (_, nodeIndex) => {
+              const nodeAngle = angle + nodeIndex * 2.3999632297;
+              const nodeRadius = 36 + (nodeIndex % 4) * 13;
+              const x = hubX + Math.cos(nodeAngle) * nodeRadius;
+              const y = hubY + Math.sin(nodeAngle) * nodeRadius * 0.72;
+              return (
+                <g key={`${category.id}-${nodeIndex}`}>
+                  <line x1={hubX} y1={hubY} x2={x} y2={y} stroke={category.color} strokeOpacity=".12" />
+                  <circle cx={x} cy={y} r={nodeIndex % 5 === 0 ? 3.2 : 2.1} fill={category.color} fillOpacity={nodeIndex % 3 === 0 ? ".92" : ".62"} />
+                </g>
+              );
+            })}
+            <circle cx={hubX} cy={hubY} r="7" fill={category.color} fillOpacity=".92" />
+            <circle cx={hubX} cy={hubY} r="15" fill="none" stroke={category.color} strokeOpacity=".18" />
+          </g>
+        );
+      })}
+      <circle cx={center.x} cy={center.y} r="8" fill="#f8fafc" />
+      <circle cx={center.x} cy={center.y} r="22" fill="none" stroke="#f8fafc" strokeOpacity=".16" />
+    </svg>
+  );
+}
+
+export default function TraitNetwork({ reportData, cohortData = null, dataStatus = null }) {
   const containerRef = useRef(null);
   const graphRef = useRef(null);
   const [activeCategory, setActiveCategory] = useState("all");
   const [selectedId, setSelectedId] = useState("you");
   const [enteredViewport, setEnteredViewport] = useState(false);
   const [renderState, setRenderState] = useState("waiting");
-  const network = useMemo(() => buildTraitNetwork(reportData), [reportData]);
+  const network = useMemo(
+    () => buildComparisonNetwork(cohortData, reportData),
+    [cohortData, reportData],
+  );
+  const categories = network.meta.categories || TRAIT_CATEGORIES;
+  const usesReportCohort = network.meta.source === "report-grounded-synthetic-cohort-api";
+  const profileCount = network.meta.profileCount || 0;
+  const citations = (network.meta.citations || [])
+    .map((citation) => ({
+      label: typeof citation?.label === "string" ? citation.label : "Open cohort source",
+      url: safeExternalUrl(citation?.url),
+    }))
+    .filter((citation) => citation.url);
 
   const visibleData = useMemo(() => {
     if (activeCategory === "all") return network;
@@ -92,7 +149,7 @@ export default function TraitNetwork({ reportData }) {
           .graphData(graphData)
           .nodeId("id")
           .nodeColor((node) => node.color)
-          .nodeVal((node) => (node.type === "anchor" ? 14 : node.type === "trait" ? 5 : 1.25))
+          .nodeVal((node) => (node.type === "anchor" ? 14 : node.type === "trait" || node.type === "group" ? 5 : 1.25))
           .nodeResolution(8)
           .nodeOpacity(0.92)
           .linkColor((link) => link.color || "rgba(158, 143, 255, 0.24)")
@@ -135,6 +192,17 @@ export default function TraitNetwork({ reportData }) {
     };
   }, [enteredViewport, visibleData]);
 
+  useEffect(() => {
+    setActiveCategory("all");
+    setSelectedId("you");
+  }, [network.meta.source]);
+
+  useEffect(() => {
+    if (!visibleData.nodes.some((node) => node.id === selectedId)) {
+      setSelectedId("you");
+    }
+  }, [selectedId, visibleData]);
+
   function focusNode(nodeId) {
     setSelectedId(nodeId);
     const graph = graphRef.current;
@@ -166,14 +234,24 @@ export default function TraitNetwork({ reportData }) {
           <p className="section-kicker">01 · Trait space</p>
           <h2 id="compare-heading">Find the signal in a hundred comparisons.</h2>
         </div>
-        <div className="metric-lockup" aria-label="128 synthetic comparison profiles">
-          <strong>128</strong><span>anonymous<br />preview profiles</span>
+        <div className="metric-lockup" aria-label={`${profileCount} synthetic comparison profiles`}>
+          <strong>{profileCount}</strong><span>synthetic<br />comparison profiles</span>
         </div>
       </div>
       <p className="surface-lede">
-        Move through a 3D field of non-medical trait similarity. The layout is a product preview,
-        not genetic distance—and no uploaded genome is shared with other people.
+        {usesReportCohort
+          ? "Move through a report-grounded, synthetic cohort generated from published broad-group frequency models. Similarity is not ancestry, identity, or genetic distance."
+          : "Move through a 3D field of non-medical trait similarity. The layout is a product preview, not genetic distance—and no uploaded genome is shared with other people."}
       </p>
+      {reportData && dataStatus?.status === "loading" && (
+        <p className="visual-data-status" role="status">Refreshing the cited synthetic cohort from the report-safe API…</p>
+      )}
+      {reportData && dataStatus?.status === "error" && (
+        <p className="visual-data-status warning" role="status">
+          The cohort API is unavailable, so this section is using its labeled local synthetic fallback.
+          {dataStatus.error ? ` ${dataStatus.error}` : ""}
+        </p>
+      )}
 
       <div className="visual-toolbar" aria-label="Trait network controls">
         <div className="filter-group" aria-label="Filter comparison profiles">
@@ -183,9 +261,9 @@ export default function TraitNetwork({ reportData }) {
             aria-pressed={activeCategory === "all"}
             onClick={() => setActiveCategory("all")}
           >
-            All traits
+            {usesReportCohort ? "All models" : "All traits"}
           </button>
-          {TRAIT_CATEGORIES.map((category) => (
+          {categories.map((category) => (
             <button
               type="button"
               className={activeCategory === category.id ? "filter-chip active" : "filter-chip"}
@@ -203,6 +281,11 @@ export default function TraitNetwork({ reportData }) {
 
       <div className="network-layout">
         <div className="canvas-frame network-canvas-frame">
+          <div className="network-static" aria-hidden="true">
+            <StaticNetwork categories={activeCategory === "all"
+              ? categories
+              : categories.filter((category) => category.id === activeCategory)} />
+          </div>
           <div
             ref={containerRef}
             className="network-canvas"
@@ -213,11 +296,11 @@ export default function TraitNetwork({ reportData }) {
             <div className="canvas-loader" role="status">
               <span className="loader-orbit" aria-hidden="true" />
               <strong>{renderState === "fallback" ? "3D preview unavailable" : "Building the trait space"}</strong>
-              <span>{renderState === "fallback" ? "Use the complete data table beside the visual." : "Preparing 135 nodes locally…"}</span>
+              <span>{renderState === "fallback" ? "Use the complete data table beside the visual." : `Preparing ${network.nodes.length} safe display nodes…`}</span>
             </div>
           )}
           <div className="canvas-caption">
-            <span><i className="status-light" /> Synthetic preview</span>
+            <span><i className="status-light" /> {usesReportCohort ? "Report-grounded synthetic cohort" : "Synthetic preview"}</span>
             <span>Drag to orbit · scroll to zoom</span>
           </div>
         </div>
@@ -228,18 +311,18 @@ export default function TraitNetwork({ reportData }) {
             <span className="node-swatch" style={{ backgroundColor: selectedNode.color }} />
             <div>
               <h3>{selectedNode.label}</h3>
-              <p>{selectedNode.type === "profile" ? "Anonymous synthetic profile" : selectedNode.type === "trait" ? "Non-medical trait hub" : "Your private report anchor"}</p>
+              <p>{selectedNode.type === "profile" ? "Anonymous synthetic profile" : selectedNode.type === "trait" ? "Non-medical trait hub" : selectedNode.type === "group" ? "Broad frequency-model hub" : "Your private report anchor"}</p>
             </div>
           </div>
           <p className="inspector-summary">{selectedNode.summary}</p>
           {selectedNode.type === "profile" && (
             <dl className="compact-stats">
               <div><dt>Preview similarity</dt><dd>{selectedNode.match}%</dd></div>
-              <div><dt>Trait lens</dt><dd>{selectedNode.categoryLabel || selectedNode.category}</dd></div>
+              <div><dt>{usesReportCohort ? "Reference model" : "Trait lens"}</dt><dd>{selectedNode.categoryLabel || selectedNode.category}</dd></div>
             </dl>
           )}
 
-          <p className="inspector-label nearby-label">Closest preview profiles</p>
+          <p className="inspector-label nearby-label">Closest synthetic profiles</p>
           <div className="profile-shortlist">
             {comparisonNodes.slice(0, 6).map((node) => (
               <button type="button" onClick={() => focusNode(node.id)} key={node.id}>
@@ -250,17 +333,24 @@ export default function TraitNetwork({ reportData }) {
         </aside>
       </div>
 
-      <div className="truth-note">
-        <strong>What this can show:</strong> an interface for de-identified, consented comparisons.
-        <span><strong>What it cannot show:</strong> identity, relatedness, or ancestry inferred from force-layout proximity.</span>
+      <div className="truth-note cohort-truth-note">
+        <strong>{usesReportCohort ? "Synthetic cohort boundary" : "Preview boundary"}</strong>
+        <span>{network.meta.disclaimer || "This visual demonstrates a safe comparison interface. It does not represent real people, identity, relatedness, or ancestry inferred from force-layout proximity."}</span>
       </div>
+      {citations.length > 0 && (
+        <div className="visual-source-list" aria-label="Synthetic cohort sources">
+          {citations.map((citation) => (
+            <a href={citation.url} target="_blank" rel="noreferrer" key={citation.url}>{citation.label}</a>
+          ))}
+        </div>
+      )}
 
       <details className="data-fallback">
         <summary>Read all {comparisonNodes.length} visible comparison profiles as data</summary>
         <div className="data-table-scroll">
           <table>
-            <caption>Deterministic synthetic comparison records used by this UI preview</caption>
-            <thead><tr><th scope="col">Anonymous profile</th><th scope="col">Trait lens</th><th scope="col">Preview similarity</th><th scope="col">Data status</th></tr></thead>
+            <caption>{usesReportCohort ? "Report-grounded synthetic comparison records; genotype calls are excluded from this table" : "Deterministic synthetic comparison records used by this UI preview"}</caption>
+            <thead><tr><th scope="col">Anonymous profile</th><th scope="col">{usesReportCohort ? "Reference model" : "Trait lens"}</th><th scope="col">Preview similarity</th><th scope="col">Data status</th></tr></thead>
             <tbody>
               {comparisonNodes.map((node) => (
                 <tr key={node.id}>

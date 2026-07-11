@@ -3,6 +3,19 @@ const PEER_LINK_COLOR = "#334155";
 const PROFILE_COUNT = 128;
 const DEMO_PROFILE_ID = "synthetic-demo-profile";
 
+const COHORT_GROUPS = Object.freeze({
+  european: { label: "European reference model", color: "#A78BFA" },
+  african: { label: "African reference model", color: "#FBBF24" },
+  hispanic_latino: { label: "Admixed American reference model", color: "#FB7185" },
+  east_asian: { label: "East Asian reference model", color: "#38BDF8" },
+  south_asian: { label: "South Asian reference model", color: "#34D399" },
+  southeast_asian: { label: "Southeast Asian reference model", color: "#22D3EE" },
+  middle_eastern_north_african: { label: "Middle Eastern / North African model", color: "#F97316" },
+  indigenous_american: { label: "Indigenous American reference model", color: "#E879F9" },
+  pacific_islander: { label: "Pacific Islander reference model", color: "#60A5FA" },
+  unspecified: { label: "Unspecified reference model", color: "#94A3B8" },
+});
+
 const TRAIT_DEFINITIONS = [
   {
     id: "lactase",
@@ -252,6 +265,191 @@ export function buildTraitNetwork(reportData) {
       traitHubCount: TRAIT_DEFINITIONS.length,
       anchorCount: 1,
       source: "deterministic-local-preview",
+      categories: TRAIT_CATEGORIES,
+    },
+  };
+}
+
+function endpointId(endpoint) {
+  return isRecord(endpoint) ? endpoint.id : endpoint;
+}
+
+function cohortGroup(group) {
+  return typeof group === "string" && Object.hasOwn(COHORT_GROUPS, group)
+    ? group
+    : "unspecified";
+}
+
+/**
+ * Convert the report-grounded cohort API response into renderer-safe clusters.
+ *
+ * The backend includes synthetic genotype calls so it can calculate aggregate
+ * similarity. This adapter deliberately drops those calls before any graph
+ * node reaches the renderer or its accessible data table.
+ */
+export function buildComparisonNetwork(cohortData, reportData) {
+  if (!isRecord(cohortData) || !Array.isArray(cohortData.nodes) || !Array.isArray(cohortData.links)) {
+    return buildTraitNetwork(reportData);
+  }
+
+  const apiProfiles = cohortData.nodes.filter(
+    (node) => isRecord(node) && node.is_synthetic === true && typeof node.id === "string",
+  );
+  if (apiProfiles.length === 0) return buildTraitNetwork(reportData);
+
+  const linkValueByTarget = new Map();
+  for (const link of cohortData.links) {
+    if (!isRecord(link)) continue;
+    const target = endpointId(link.target);
+    const source = endpointId(link.source);
+    const profileId = target === "you" ? source : target;
+    if (typeof profileId === "string" && Number.isFinite(Number(link.value))) {
+      linkValueByTarget.set(profileId, Math.max(0, Math.min(1, Number(link.value))));
+    }
+  }
+
+  const categoryIds = [...new Set(apiProfiles.map((node) => cohortGroup(node.group)))];
+  const categories = categoryIds.map((id) => ({ id, ...COHORT_GROUPS[id] }));
+  const nodes = [
+    {
+      id: "you",
+      type: "anchor",
+      label: "You (report anchor)",
+      category: "anchor",
+      color: ANCHOR_COLOR,
+      summary: "Your boundary-checked report anchor. Genotype calls are excluded from the rendered graph.",
+      val: 14,
+    },
+    ...categories.map((category) => ({
+      id: `group-${category.id}`,
+      type: "group",
+      label: category.label,
+      category: category.id,
+      color: category.color,
+      summary: "A broad modeling bucket used to generate illustrative profiles; it is not an identity assignment.",
+      val: 6,
+    })),
+  ];
+  const links = categories.map((category) => ({
+    id: `you-to-group-${category.id}`,
+    source: "you",
+    target: `group-${category.id}`,
+    kind: "anchor",
+    category: category.id,
+    color: category.color,
+  }));
+
+  for (const [index, rawNode] of apiProfiles.entries()) {
+    const category = cohortGroup(rawNode.group);
+    const style = COHORT_GROUPS[category];
+    const match = Math.round((linkValueByTarget.get(rawNode.id) || 0) * 100);
+    const label = typeof rawNode.label === "string"
+      ? rawNode.label
+      : `Illustrative profile ${String(index + 1).padStart(3, "0")}`;
+    nodes.push({
+      id: rawNode.id,
+      type: "profile",
+      label,
+      category,
+      categoryLabel: style.label,
+      color: style.color,
+      match,
+      summary: `Synthetic ${match}% modeled trait similarity; no real comparison person is represented.`,
+      val: 1.35,
+    });
+    links.push({
+      id: `${rawNode.id}-to-group-${category}`,
+      source: rawNode.id,
+      target: `group-${category}`,
+      kind: "synthetic-model",
+      category,
+      color: style.color,
+    });
+  }
+
+  return {
+    nodes,
+    links,
+    meta: {
+      ...VISUALIZATION_SAFETY,
+      profileCount: apiProfiles.length,
+      groupHubCount: categories.length,
+      anchorCount: 1,
+      source: "report-grounded-synthetic-cohort-api",
+      categories,
+      disclaimer: typeof cohortData.disclaimer === "string" ? cohortData.disclaimer : "",
+      citations: Array.isArray(cohortData.citations) ? cohortData.citations : [],
+      generationMethod: cohortData.generation_method,
+    },
+  };
+}
+
+/**
+ * Normalize the population-map API response for the Three.js scene.
+ * Coordinates and labels identify cited public reference panels; the optional
+ * marker is present only when the backend echoes a recognized user-supplied
+ * broad label.
+ */
+export function buildPopulationGlobe(populationMapData) {
+  if (!isRecord(populationMapData) || !Array.isArray(populationMapData.populations)) {
+    return null;
+  }
+
+  const regions = populationMapData.populations
+    .filter((population) => isRecord(population)
+      && typeof population.id === "string"
+      && typeof population.label === "string"
+      && Number.isFinite(Number(population.lat))
+      && Number.isFinite(Number(population.lon)))
+    .map((population) => {
+      const category = cohortGroup(population.group);
+      const hasScore = population.expected_similarity !== null
+        && population.expected_similarity !== undefined;
+      const rawScore = hasScore ? Number(population.expected_similarity) : Number.NaN;
+      const modelScore = Number.isFinite(rawScore)
+        ? Math.round(Math.max(0, Math.min(1, rawScore)) * 100)
+        : null;
+      return {
+        id: population.id,
+        label: population.label,
+        country: typeof population.country === "string" ? population.country : "Reference panel",
+        lat: Number(population.lat),
+        lng: Number(population.lon),
+        color: COHORT_GROUPS[category].color,
+        category,
+        modelScore,
+        source: typeof population.source === "string" ? population.source : "",
+        context: `${population.id} · ${typeof population.country === "string" ? population.country : "cited reference panel"}`,
+        detail: modelScore === null
+          ? "No modeled trait similarity is available for the measured report fields."
+          : `${modelScore}% expected aggregate similarity across the report's measured, non-medical trait model. This is not an ancestry percentage.`,
+      };
+    });
+  if (regions.length === 0) return null;
+
+  const rawMarker = isRecord(populationMapData.you_marker) ? populationMapData.you_marker : null;
+  const markerRegion = rawMarker
+    ? regions.find((region) => region.id === rawMarker.population_id)
+    : null;
+  const marker = markerRegion
+    ? {
+        ...markerRegion,
+        label: typeof rawMarker.label === "string" ? rawMarker.label : markerRegion.label,
+        source: "user-supplied-label",
+        context: "An approximate display anchor copied from a broad label the user supplied; never inferred from DNA.",
+      }
+    : null;
+
+  return {
+    profileId: "report-grounded-reference-map",
+    residence: marker,
+    regions,
+    meta: {
+      source: "report-grounded-population-map-api",
+      containsRealReferencePopulations: true,
+      identityOrLocationDerivedFromDna: false,
+      disclaimer: typeof populationMapData.disclaimer === "string" ? populationMapData.disclaimer : "",
+      citations: Array.isArray(populationMapData.citations) ? populationMapData.citations : [],
     },
   };
 }

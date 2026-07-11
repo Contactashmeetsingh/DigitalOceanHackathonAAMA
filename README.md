@@ -51,6 +51,35 @@ repository.
 
 ## Iteration log
 
+- **2026-07-11 — Report-grounded visualization handoff (in progress):** The
+  frontend now has a renderer-safe adapter for the implemented
+  `/api/comparison-cohort` contract. It clusters the returned synthetic cohort
+  by broad reference model, keeps the API's modeled similarity values and
+  visible disclaimer/citations, and deliberately strips both user and
+  synthetic genotype calls before graph nodes reach WebGL or the accessible
+  table. Also pinned the two 3D runtime dependencies to exact versions, added
+  the required MIT notice for `3d-force-graph`, and added production page
+  metadata/favicon polish. The population-map adapter now renders cited
+  reference-panel coordinates and modeled non-medical trait similarity, keeps
+  missing scores as `n/a`, and creates a display anchor only from a recognized
+  user-supplied broad label. The two adapters, same-origin API helpers, and
+  safety fallbacks pass all `21` frontend tests; the production build succeeds
+  with both 3D engines retained as lazy chunks. The smoke script passes shell
+  syntax validation and intentionally requires a real base URL. Production-
+  build browser verification remains in progress.
+- **2026-07-11 — Production visual QA and graceful degradation (in
+  progress):** The production build's desktop hero, 128-profile comparison
+  shell, filter behavior, globe data controls, and six-topic research room were
+  inspected in a clean guest browser. The same Chrome session later reported
+  WebGL unavailable after repeated context creation, while all semantic data
+  controls remained operable. Added a deterministic, color-clustered SVG
+  network fallback so the comparison surface remains visually useful as well
+  as accessible when WebGL2 is unavailable; the globe already retains its
+  CSS/SVG depth fallback and complete region list. The fallback pass preserves
+  all `21` passing frontend tests, a successful Vite production build, and a
+  clean `git diff --check`; the initial JavaScript bundle remains about 219 kB
+  (69 kB gzip), with both 3D engines still lazy-loaded. Mobile-width browser
+  verification remains.
 - **2026-07-11 — Four-surface frontend verification (in progress):** The
   integrated React shell, upload/report path, deterministic visualization data,
   lazy 3D scenes, and research workspace compile successfully. All `13` Node
@@ -413,6 +442,8 @@ npm run build                  # -> frontend/dist, served by Flask at /
 
 - [ ] Four-surface frontend redesign is implemented and visually verified at
       desktop and mobile widths.
+- [ ] Report-grounded comparison and population-map responses render their
+      backend-provided disclaimers/citations and retain safe preview fallbacks.
 - [x] Frontend/backend integration contract documents current endpoints and
       clearly separates live behavior from planned aggregate visualization data.
 - Strict 23andMe text validation with exact call/no-call, malformed, duplicate,
