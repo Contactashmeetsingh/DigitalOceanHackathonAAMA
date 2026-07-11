@@ -79,6 +79,10 @@ that any population is homogeneous.
   visibly instead of claiming ingestion. The open full-text corpus remains the
   production retrieval source until DigitalOcean accepts that object or the
   files are attached through the console.
+- PubMed Central article identifiers are crawled through Europe PMC's lawful
+  open-full-text mirrors because the DigitalOcean crawler returned failed status
+  for every `pmc.ncbi.nlm.nih.gov` page in the first job while providing no
+  error detail. Citation links above retain their familiar canonical pages.
 - `--apply-web` adds only missing crawler URLs. `--index` starts indexing for the
   named KB, `--status` reports its latest job, and `--attach` selects the intended
   agent by the configured endpoint rather than guessing from account order.

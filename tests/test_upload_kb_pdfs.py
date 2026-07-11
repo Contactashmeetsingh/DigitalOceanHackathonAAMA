@@ -9,7 +9,7 @@ from scripts.upload_kb_pdfs import UploadError, api_request, existing_file_names
 
 def test_existing_file_names_handles_nested_file_sources():
     payload = {
-        "data_sources": [
+        "knowledge_base_data_sources": [
             {"file_upload_data_source": {"original_file_name": "study.pdf"}},
             {"web_crawler_data_source": {"base_url": "https://example.test"}},
         ]

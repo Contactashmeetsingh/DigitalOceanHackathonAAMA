@@ -81,7 +81,8 @@ def find_named_kb(token: str, name: str) -> dict[str, Any]:
 
 def existing_file_names(payload: dict[str, Any]) -> set[str]:
     names: set[str] = set()
-    for source in payload.get("data_sources", []):
+    sources = payload.get("knowledge_base_data_sources", payload.get("data_sources", []))
+    for source in sources:
         file_source = source.get("file_upload_data_source") or {}
         name = file_source.get("original_file_name") or source.get("original_file_name")
         if name:

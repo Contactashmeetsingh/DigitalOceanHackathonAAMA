@@ -170,7 +170,10 @@ repository.
   American) sources to close explicit corpus gaps. The first indexing job is in
   progress; the presigned-PDF add-source request is currently rejected by the
   control plane and is recorded as a visible limitation rather than reported as
-  ingested.
+  ingested. The first crawler job was partial: ScienceDirect indexed, while all
+  seven NCBI PMC URLs failed without API error detail. The manifest now uses
+  Europe PMC open-full-text mirrors and indexing targets only current-manifest
+  UUIDs; a clean final pass remains required.
 - **2026-07-11 — DigitalOcean credential verifier (started):** Validate and
   publish the standalone four-check diagnostic for serverless inference,
   control-plane Knowledge Bases, deployed-agent RAG evidence, and credential

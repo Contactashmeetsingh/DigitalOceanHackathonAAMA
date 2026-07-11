@@ -14,16 +14,16 @@ KB_EMBEDDING_MODEL_UUID="${KB_EMBEDDING_MODEL_UUID:-22653204-79ed-11ef-bf8f-4e01
 
 # label|URL — all use section-based chunking for clean HTML full text.
 WEB_SOURCES=(
-  "1000 Genomes global reference|https://pmc.ncbi.nlm.nih.gov/articles/PMC4750478/"
-  "Diversity gap and research ethics|https://pmc.ncbi.nlm.nih.gov/articles/PMC11770215/"
-  "Ancestrally matched Thai imputation|https://pmc.ncbi.nlm.nih.gov/articles/PMC10390539/"
-  "GenomeAsia 100K pilot|https://pmc.ncbi.nlm.nih.gov/articles/PMC7054211/"
+  "1000 Genomes global reference|https://europepmc.org/articles/PMC4750478"
+  "Diversity gap and research ethics|https://europepmc.org/articles/PMC11770215"
+  "Ancestrally matched Thai imputation|https://europepmc.org/articles/PMC10390539"
+  "GenomeAsia 100K pilot|https://europepmc.org/articles/PMC7054211"
   "Sub-Saharan African panel evaluation|https://www.sciencedirect.com/science/article/pii/S2666979X23001003"
-  "African-American reference panel|https://pmc.ncbi.nlm.nih.gov/articles/PMC8571350/"
-  "East Asian 14393-genome panel|https://pmc.ncbi.nlm.nih.gov/articles/PMC10411914/"
-  "Native American imputation panel|https://pmc.ncbi.nlm.nih.gov/articles/PMC8762266/"
-  "Qatar Genome Arab haplotype panel|https://pmc.ncbi.nlm.nih.gov/articles/PMC8511259/"
-  "GLAD admixed Latin American resource|https://pmc.ncbi.nlm.nih.gov/articles/PMC11605695/"
+  "African-American reference panel|https://europepmc.org/articles/PMC8571350"
+  "East Asian 14393-genome panel|https://europepmc.org/articles/PMC10411914"
+  "Native American imputation panel|https://europepmc.org/articles/PMC8762266"
+  "Qatar Genome Arab haplotype panel|https://europepmc.org/articles/PMC8511259"
+  "GLAD admixed Latin American resource|https://europepmc.org/articles/PMC11605695"
 )
 
 # filename|label|URL — stage these for console file upload with semantic chunks.
@@ -86,7 +86,7 @@ list_sources() {
 
 find_kb() {
   local response
-  response="$(curl --fail --silent --show-error \
+  response="$(curl --silent --show-error \
     -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
     -H "Accept: application/json" \
     "$API_BASE/knowledge_bases?per_page=200")"
@@ -230,10 +230,35 @@ upload_pdfs() {
 }
 
 start_indexing() {
-  local kb_uuid database_id payload response
+  local kb_uuid database_id sources payload response entry label url
   IFS=$'\t' read -r kb_uuid database_id < <(find_kb)
-  payload="$(python3 -c 'import json,sys; print(json.dumps({"knowledge_base_uuid": sys.argv[1]}))' "$kb_uuid")"
-  response="$(curl --fail --silent --show-error \
+  sources="$(curl --fail --silent --show-error \
+    -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
+    -H "Accept: application/json" \
+    "$API_BASE/knowledge_bases/$kb_uuid/data_sources")"
+  local manifest_urls=()
+  for entry in "${WEB_SOURCES[@]}"; do
+    IFS='|' read -r label url <<<"$entry"
+    manifest_urls+=("$url")
+  done
+  payload="$(printf '%s' "$sources" | python3 -c '
+import json
+import sys
+kb_uuid, *urls = sys.argv[1:]
+rows = json.load(sys.stdin).get("knowledge_base_data_sources", [])
+by_url = {
+    (row.get("web_crawler_data_source") or {}).get("base_url"): row.get("uuid")
+    for row in rows
+}
+missing = [url for url in urls if not by_url.get(url)]
+if missing:
+    raise SystemExit("Apply the current web-source manifest before indexing.")
+print(json.dumps({
+    "knowledge_base_uuid": kb_uuid,
+    "data_source_uuids": [by_url[url] for url in urls],
+}))
+' "$kb_uuid" "${manifest_urls[@]}")"
+  response="$(curl --silent --show-error \
     -X POST \
     -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
     -H "Content-Type: application/json" \
@@ -242,10 +267,12 @@ start_indexing() {
   printf '%s' "$response" | python3 -c '
 import json
 import sys
-job = json.load(sys.stdin).get("job", {})
+payload = json.load(sys.stdin)
+job = payload.get("job", {})
 if not job.get("uuid"):
-    raise SystemExit("Indexing request returned no job UUID.")
-print("STARTED: indexing all knowledge-base sources")
+    message = payload.get("message") or payload.get("error") or "no job UUID"
+    raise SystemExit("Indexing request failed: " + str(message)[:300])
+print("STARTED: indexing current manifest sources only")
 print("Indexing job UUID: " + str(job["uuid"]))
 print("Status: " + str(job.get("status", "submitted")))
 '
