@@ -23,7 +23,11 @@ def client():
 def test_narrative_returns_content_and_citations(client, monkeypatch):
     def fake_explain(messages):
         assert messages[0]["role"] == "system"
-        return {"content": "Grounded answer.", "citations": [{"url": "https://example.org", "label": "Example"}]}
+        return {
+            "content": "Grounded answer.",
+            "citations": [{"url": "https://example.org", "label": "Example"}],
+            "answer_mode": "agent_rag",
+        }
 
     monkeypatch.setattr(gradient_client, "explain", fake_explain)
 
@@ -37,6 +41,7 @@ def test_narrative_returns_content_and_citations(client, monkeypatch):
     assert data["category"] == "interpretation"
     assert data["content"] == "Grounded answer."
     assert data["citations"] == [{"url": "https://example.org", "label": "Example"}]
+    assert data["answer_mode"] == "agent_rag"
 
 
 def test_narrative_rejects_unknown_category(client):

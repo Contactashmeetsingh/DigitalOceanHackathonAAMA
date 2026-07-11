@@ -29,6 +29,11 @@ def test_south_asian_match_prioritizes_open_programs_and_keeps_genomeasia_contex
     assert "genes-and-health" in _ids(rows)
     assert "genomeasia-100k" in _ids(rows)
     assert all(row["direct_enrollment"] for row in rows[:3])
+    assert all("South Asian" in row["relationship_to_user"] or "broad public cohort" in row["relationship_to_user"] for row in rows)
+    assert {row["pathway_type"] for row in rows} == {
+        "public_enrollment",
+        "consortium_or_data_pathway",
+    }
 
 
 def test_african_and_indigenous_aliases_match_relevant_programs():

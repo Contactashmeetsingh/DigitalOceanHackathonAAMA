@@ -14,7 +14,9 @@ Two paths, one function:
 from __future__ import annotations
 
 import os
+import re
 import sys
+from urllib.parse import urlparse
 
 import requests
 from openai import DefaultHttpxClient, OpenAI, OpenAIError
@@ -91,7 +93,11 @@ def _via_agent(messages: list[dict]) -> dict:
     except (KeyError, IndexError, TypeError) as error:
         raise NarrativeUnavailable("Gradient agent returned an unexpected response shape.") from error
 
-    return {"content": content, "citations": _extract_citations(data)}
+    return {
+        "content": content,
+        "citations": _extract_citations(data, content),
+        "answer_mode": "agent_rag",
+    }
 
 
 def _via_serverless(messages: list[dict]) -> dict:
@@ -107,38 +113,56 @@ def _via_serverless(messages: list[dict]) -> dict:
         completion = client.chat.completions.create(model=FALLBACK_MODEL, messages=messages)
     except OpenAIError as error:
         raise NarrativeUnavailable(f"Serverless inference request failed: {error}") from error
-    return {"content": completion.choices[0].message.content, "citations": []}
+    return {
+        "content": completion.choices[0].message.content,
+        "citations": [],
+        "answer_mode": "serverless_fallback",
+    }
 
 
-def _extract_citations(data: dict) -> list[dict[str, str]]:
+def _valid_url(value: object) -> str | None:
+    if not isinstance(value, str):
+        return None
+    candidate = value.strip().rstrip(".,;:)]}")
+    parsed = urlparse(candidate)
+    return candidate if parsed.scheme in {"http", "https"} and parsed.netloc else None
+
+
+def _extract_citations(data: dict, content: str = "") -> list[dict[str, str]]:
     """Best-effort parse of retrieval citations from an agent response.
 
     DO's `include_retrieval_info` payload shape isn't pinned down in the
     public docs, so this checks the plausible key names defensively and
     degrades to an empty list rather than raising if none match.
     """
-    retrieval = data.get("retrieval") or data.get("retrieval_info") or {}
-    if not isinstance(retrieval, dict):
-        return []
-    chunks = (
-        retrieval.get("retrieved_data")
-        or retrieval.get("results")
-        or retrieval.get("citations")
-        or retrieval.get("sources")
-        or []
-    )
-    if not isinstance(chunks, list):
-        return []
-
     citations: list[dict[str, str]] = []
     seen: set[str] = set()
-    for chunk in chunks:
-        if not isinstance(chunk, dict):
-            continue
-        url = chunk.get("source_url") or chunk.get("url") or chunk.get("link")
+
+    def add(url_value: object, label_value: object = None) -> None:
+        url = _valid_url(url_value)
         if not url or url in seen:
-            continue
+            return
         seen.add(url)
-        label = chunk.get("source_name") or chunk.get("title") or chunk.get("name") or url
-        citations.append({"url": url, "label": label})
+        label = label_value if isinstance(label_value, str) and label_value.strip() else url
+        citations.append({"url": url, "label": label.strip()})
+
+    def walk(value: object) -> None:
+        if isinstance(value, dict):
+            label = (
+                value.get("source_name")
+                or value.get("title")
+                or value.get("name")
+                or value.get("document_name")
+            )
+            for key in ("source_url", "url", "link", "document_url", "uri"):
+                add(value.get(key), label)
+            for child in value.values():
+                walk(child)
+        elif isinstance(value, list):
+            for child in value:
+                walk(child)
+
+    walk(data.get("retrieval") or data.get("retrieval_info") or {})
+    for inline_url in re.findall(r"https?://[^\s<>\"]+", content or ""):
+        add(inline_url, "Source cited in the agent answer")
     return citations

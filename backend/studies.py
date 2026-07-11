@@ -73,8 +73,32 @@ def match(population_label: str | None) -> list[dict]:
         default_ids = set(data.get("default_study_ids", []))
         relevant = [study for study in studies if study.get("id") in default_ids]
 
+    matched: list[dict] = []
+    for source_study in relevant:
+        study = dict(source_study)
+        study["pathway_type"] = (
+            "public_enrollment"
+            if study.get("direct_enrollment", False)
+            else "consortium_or_data_pathway"
+        )
+        if population_key and population_key in study.get("populations", []):
+            study["relationship_to_user"] = (
+                f"Shown because the user supplied the broad context {population_label}. "
+                "This is a research-literature match, not proof of eligibility or a DNA inference."
+            )
+        elif "all" in study.get("populations", []):
+            study["relationship_to_user"] = (
+                "Shown as a broad public cohort whose stated scope includes historically "
+                "underrepresented communities; verify its current geography and eligibility."
+            )
+        else:
+            study["relationship_to_user"] = (
+                "Shown as a dated general research bridge; no population match was inferred from DNA."
+            )
+        matched.append(study)
+
     return sorted(
-        relevant,
+        matched,
         key=lambda study: (
             not study.get("direct_enrollment", False),
             study.get("name", ""),

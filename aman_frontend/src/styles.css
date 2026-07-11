@@ -833,6 +833,26 @@ button:disabled {
   white-space: pre-wrap;
 }
 
+.narrative-provenance {
+  display: flex;
+  margin-bottom: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+}
+
+.retrieval-warning {
+  margin-top: 12px !important;
+  padding: 10px 12px;
+  color: var(--warning) !important;
+  background: var(--warning-bg);
+  border: 1px solid rgb(245 173 66 / 42%);
+  font-size: 0.78rem;
+}
+
 .chart-methodology {
   margin: -8px 0 18px;
   color: var(--muted);

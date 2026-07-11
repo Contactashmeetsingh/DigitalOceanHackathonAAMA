@@ -1117,6 +1117,11 @@ function StudiesSection({ studies }) {
                   )}
                 </div>
                 {study.population_focus && <p>{study.population_focus}</p>}
+                <StudyDetail label="Why this appears for this report" value={study.relationship_to_user} />
+                <StudyDetail
+                  label="Access pathway"
+                  value={study.pathway_type === "public_enrollment" ? "Public enrollment pathway" : "Consortium or controlled-data pathway—not central public enrollment"}
+                />
                 <StudyDetail label="Current status" value={study.recruitment_status || study.status} />
                 <StudyDetail label="What participation may involve" value={study.participation} />
                 <StudyDetail label="Consent and privacy" value={study.consent_privacy || study.privacy} />
@@ -1346,7 +1351,12 @@ function QuestionGuide({ analysisReady, selected, onSelect, reportData }) {
       }
       setNarratives((prev) => ({
         ...prev,
-        [categoryId]: { status: "ready", content: data.content, citations: data.citations || [] },
+        [categoryId]: {
+          status: "ready",
+          content: data.content,
+          citations: data.citations || [],
+          answerMode: data.answer_mode || "unknown",
+        },
       }));
     } catch {
       setNarratives((prev) => ({
@@ -1417,6 +1427,12 @@ function QuestionGuide({ analysisReady, selected, onSelect, reportData }) {
                 )}
                 {activeNarrative?.status === "ready" && (
                   <div className="narrative-answer">
+                    <div className="narrative-provenance">
+                      <span className={`state-pill ${activeNarrative.answerMode === "agent_rag" ? "ready" : "waiting"}`}>
+                        {activeNarrative.answerMode === "agent_rag" ? "Gradient agent + RAG" : "Serverless fallback"}
+                      </span>
+                      <span>{activeNarrative.citations.length} retrieval citation{activeNarrative.citations.length === 1 ? "" : "s"}</span>
+                    </div>
                     <p>{activeNarrative.content}</p>
                     {activeNarrative.citations.length > 0 && (
                       <div className="source-list" aria-label="AI answer sources">
@@ -1432,6 +1448,12 @@ function QuestionGuide({ analysisReady, selected, onSelect, reportData }) {
                           </a>
                         ))}
                       </div>
+                    )}
+                    {activeNarrative.citations.length === 0 && (
+                      <p className="retrieval-warning">
+                        No retrieval citations were returned. Treat this as an uncited explanation and
+                        verify claims in the deterministic report's primary sources before acting.
+                      </p>
                     )}
                   </div>
                 )}

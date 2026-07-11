@@ -151,6 +151,15 @@ repository.
   Chrome visual QA uploaded the real public v4 fixture, rendered `DISTANCE
   ONLINE` with 2,836/19,979 overlap, selected one node across both views, and
   confirmed the inspector and TOPMed 97,256 denominator on the built bundle.
+- **2026-07-11 — Report and retrieval provenance polish (completed):** Kept the
+  deterministic coverage/trait/refusal/transparency report as Pillar 3 and made
+  every research-program match explain why it appears for the user-supplied
+  broad context, with an explicit public-enrollment vs. consortium/controlled-
+  data pathway field. Gradient agent answers now identify RAG vs. serverless
+  fallback, recursively collect nested `include_retrieval_info` URLs plus inline
+  source URLs, show the citation count inline, and display an amber verification
+  warning when no retrieval citations return. The full suite now passes with 86
+  Python tests, seven frontend tests, and a clean production build.
 - **2026-07-11 — DigitalOcean credential verifier (started):** Validate and
   publish the standalone four-check diagnostic for serverless inference,
   control-plane Knowledge Bases, deployed-agent RAG evidence, and credential
