@@ -1,6 +1,8 @@
 # --- Project-specific ---
 # Secrets: never commit real keys
 .env
+# Local AI-session exports can contain pasted credentials and command output.
+20??-??-??-??????-*.txt
 # Real genome files are never committed (privacy + size)
 data/samples/*.txt
 data/samples/*.csv
@@ -10,6 +12,10 @@ venv/
 # Node / Vite frontend
 node_modules/
 frontend/dist/
+# AI coding-tool skill packages (local tooling, not project code)
+frontend/.claude/
+frontend/.codex/
+frontend/.cursor/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

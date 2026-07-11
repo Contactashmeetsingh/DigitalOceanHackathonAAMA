@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { TOPMED_PANEL } from "./referencePanelData.js";
+import { canReplaceSelectedFile } from "./uploadInteraction.js";
 
 const ANSWER_CATEGORIES = [
   {
@@ -41,8 +42,64 @@ const ANSWER_CATEGORIES = [
   },
 ];
 
+const TRUST_PROMISES = [
+  {
+    icon: "vault",
+    title: "In-memory handling",
+    description: "The app processes the upload in memory and does not retain the raw genome.",
+  },
+  {
+    icon: "compass",
+    title: "No ancestry re-inference",
+    description: "A broad label is optional context copied from an existing result—not a DNA conclusion.",
+  },
+  {
+    icon: "shield",
+    title: "Default-deny boundaries",
+    description: "Health, exact-ethnicity, and off-allowlist requests remain out of scope.",
+  },
+];
+
+function Icon({ name, size = 20 }) {
+  const common = {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.8,
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    "aria-hidden": true,
+  };
+
+  if (name === "upload") {
+    return <svg {...common}><path d="M12 16V3" /><path d="m7 8 5-5 5 5" /><path d="M5 16.5v3A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5v-3" /></svg>;
+  }
+  if (name === "check") {
+    return <svg {...common}><path d="m5 12 4.3 4.3L19 6.6" /></svg>;
+  }
+  if (name === "vault") {
+    return <svg {...common}><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M8 3v5h8V3" /><path d="M9 14h6" /></svg>;
+  }
+  if (name === "compass") {
+    return <svg {...common}><circle cx="12" cy="12" r="8.5" /><path d="m14.7 9.3-1.8 3.6-3.6 1.8 1.8-3.6Z" /></svg>;
+  }
+  if (name === "shield") {
+    return <svg {...common}><path d="M12 3.5 19 6v5.3c0 4.5-2.8 7.7-7 9.2-4.2-1.5-7-4.7-7-9.2V6Z" /><path d="m9.1 12 1.9 1.9 4-4" /></svg>;
+  }
+  if (name === "map") {
+    return <svg {...common}><path d="m3.5 6.5 5-2 7 2 5-2v13l-5 2-7-2-5 2Z" /><path d="M8.5 4.5v13M15.5 6.5v13" /></svg>;
+  }
+  if (name === "layers") {
+    return <svg {...common}><path d="m12 3 8.5 4.5L12 12 3.5 7.5Z" /><path d="m3.5 12 8.5 4.5 8.5-4.5" /><path d="m3.5 16.5 8.5 4.5 8.5-4.5" /></svg>;
+  }
+  return <svg {...common}><circle cx="12" cy="12" r="8" /></svg>;
+}
+
 export default function App() {
   const [file, setFile] = useState(null);
+  const [populationLabel, setPopulationLabel] = useState("");
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null); // { data } | { error }
@@ -56,6 +113,7 @@ export default function App() {
   }, [result]);
 
   function pickFile(candidate) {
+    if (!canReplaceSelectedFile(loading)) return;
     setResult(null);
     setFileError("");
     if (!candidate) {
@@ -78,10 +136,12 @@ export default function App() {
   function onDrop(event) {
     event.preventDefault();
     setDragging(false);
+    if (!canReplaceSelectedFile(loading)) return;
     pickFile(event.dataTransfer.files?.[0]);
   }
 
   function onDropzoneKeyDown(event) {
+    if (!canReplaceSelectedFile(loading)) return;
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       inputRef.current?.click();
@@ -99,12 +159,13 @@ export default function App() {
 
     const body = new FormData();
     body.append("file", file);
+    body.append("population_label", populationLabel.trim());
     try {
       const response = await fetch("/api/analyze", { method: "POST", body });
       const data = await response.json().catch(() => ({}));
       setResult(
         response.ok
-          ? { data }
+          ? { data, submittedPopulationLabel: populationLabel.trim() }
           : { error: data.error || `Analysis failed (HTTP ${response.status}). Try again.` },
       );
     } catch {
@@ -117,19 +178,60 @@ export default function App() {
   const hasAnalysis = Boolean(result?.data);
 
   return (
-    <main className="wrap">
-      <header>
-        <p className="eyebrow">DNA literacy &amp; equity</p>
-        <h1>Ancestry Audit Layer</h1>
-        <p className="lede">
-          Upload a 23andMe raw file. We explain what it actually tells you—and{" "}
-          <strong>why the answer gets vague when reference panels leave people out.</strong>{" "}
-          We interpret existing results; we do not infer ancestry or health risk.
-        </p>
+    <main className="wrap" id="main-content">
+      <a className="skip-link" href="#analyze">Skip to raw-data analysis</a>
+      <header className="site-header">
+        <div className="topbar">
+          <a className="brand-lockup" href="#main-content" aria-label="Ancestry Audit Layer home">
+            <span className="brand-mark" aria-hidden="true"><span /><span /><span /></span>
+            <span>Ancestry <strong>Audit</strong></span>
+          </a>
+          <nav className="site-nav" aria-label="Page sections">
+            <a href="#analyze">Analyze</a>
+            <a href="#evidence">Evidence</a>
+            <a href="#questions">Limits</a>
+          </nav>
+        </div>
+
+        <div className="hero-grid">
+          <div className="hero-copy">
+            <p className="eyebrow">DNA literacy &amp; equity</p>
+            <h1>Know what a result can support. <em>See where certainty ends.</em></h1>
+            <p className="lede">
+              A careful interpretation layer for consumer DNA files. It separates measured coverage,
+              cited non-medical traits, and the evidence limits that a responsible report should show.
+            </p>
+            <div className="hero-actions">
+              <a className="primary-link" href="#analyze">Start an audit <span aria-hidden="true">↓</span></a>
+              <p>23andMe raw-data export · no health or ancestry inference</p>
+            </div>
+          </div>
+          <aside className="audit-sequence" aria-label="How the audit works">
+            <p className="sequence-label">The audit sequence</p>
+            <ol>
+              <li><span>01</span><div><strong>Validate the file</strong><small>Format, build, coverage, and no-calls.</small></div></li>
+              <li><span>02</span><div><strong>Interpret the allowlist</strong><small>Only curated, non-medical markers.</small></div></li>
+              <li><span>03</span><div><strong>Expose the limits</strong><small>Evidence context, refusals, and research links.</small></div></li>
+            </ol>
+          </aside>
+        </div>
       </header>
 
-      <section className="card" aria-labelledby="upload-heading" aria-busy={loading}>
-        <h2 id="upload-heading">1. Analyze your raw-data file</h2>
+      <section className="trust-rail" aria-label="Product safeguards">
+        {TRUST_PROMISES.map((promise) => (
+          <article className="trust-item" key={promise.title}>
+            <span className="trust-icon"><Icon name={promise.icon} size={19} /></span>
+            <div><h2>{promise.title}</h2><p>{promise.description}</p></div>
+          </article>
+        ))}
+      </section>
+
+      <section className="card upload-card" id="analyze" aria-labelledby="upload-heading" aria-busy={loading}>
+        <div className="section-heading card-heading">
+          <div><p className="step-label">Step 01 · Local report</p><h2 id="upload-heading">Analyze a raw-data file</h2></div>
+          <span className="state-pill waiting">Private by design</span>
+        </div>
+        <p className="section-intro upload-intro">Use the extracted 23andMe `.txt` export. The report reads coverage and only its small, reviewed non-medical trait set.</p>
         <form onSubmit={onSubmit}>
           <label
             className={`dropzone${dragging ? " drag" : ""}`}
@@ -145,12 +247,10 @@ export default function App() {
             onDragLeave={() => setDragging(false)}
             onDrop={onDrop}
           >
-            <span className="drop-icon" aria-hidden="true">
-              &#8613;
-            </span>
+            <span className="drop-icon"><Icon name="upload" size={30} /></span>
             <span className="drop-text">
               <strong>Drop a 23andMe raw .txt file</strong>
-              <span id="file-help">or press Enter to choose one</span>
+              <span id="file-help">or press Enter to choose one from this device</span>
             </span>
             <input
               ref={inputRef}
@@ -165,7 +265,7 @@ export default function App() {
           {file ? (
             <div className="file-row">
               <p className="filename">
-                <span aria-hidden="true">&#10003;</span> Selected: <strong>{file.name}</strong>
+                <span className="file-check"><Icon name="check" size={17} /></span> Selected: <strong>{file.name}</strong>
               </p>
               <button
                 className="text-button"
@@ -186,6 +286,27 @@ export default function App() {
             </p>
           )}
 
+          <div className="population-field">
+            <label htmlFor="population-label">
+              Broad population label <span>(optional)</span>
+            </label>
+            <input
+              id="population-label"
+              type="text"
+              value={populationLabel}
+              disabled={loading}
+              maxLength={120}
+              autoComplete="off"
+              aria-describedby="population-help"
+              placeholder="For example: Broadly South Asian"
+              onChange={(event) => setPopulationLabel(event.target.value)}
+            />
+            <p id="population-help">
+              Copy a broad label from your existing ancestry result if you want population-aware
+              context. This app never infers or verifies ancestry from your DNA file.
+            </p>
+          </div>
+
           <button className="primary-button" type="submit" disabled={!file || loading}>
             {loading ? "Analyzing securely…" : "Analyze file"}
           </button>
@@ -198,14 +319,18 @@ export default function App() {
           )}
         </form>
         <p className="privacy" id="privacy-note">
-          <span aria-hidden="true">&#128274;</span> Your file is processed in memory and never stored.
+          <Icon name="vault" size={17} /> Your file is processed in memory and is not retained by application code.
         </p>
       </section>
 
       {!result && !loading && (
-        <section className="card status-card" aria-labelledby="result-empty-heading">
-          <h2 id="result-empty-heading">2. Guided result</h2>
-          <p className="empty-state">No analysis yet. Choose a file above to begin.</p>
+        <section className="card status-card result-preview" aria-labelledby="result-empty-heading">
+          <div className="section-heading"><div><p className="step-label">Step 02 · Guided result</p><h2 id="result-empty-heading">A report with its uncertainty attached</h2></div><span className="state-pill waiting">Waiting for a file</span></div>
+          <div className="preview-grid">
+            <p><strong>Coverage</strong><span>What this chip measured—and what it did not.</span></p>
+            <p><strong>Evidence</strong><span>Curated traits with cited transfer limits.</span></p>
+            <p><strong>Boundaries</strong><span>Clear refusals for health and identity claims.</span></p>
+          </div>
         </section>
       )}
 
@@ -227,24 +352,51 @@ export default function App() {
               </button>
             </div>
           ) : (
-            <Results data={result.data} />
+            <Results
+              data={result.data}
+              submittedPopulationLabel={result.submittedPopulationLabel}
+            />
           )}
         </section>
       )}
 
       <ReferencePanelChart />
 
+      <EvidenceAtlasRoadmap />
+
       <QuestionGuide
         analysisReady={hasAnalysis}
         selected={selectedCategory}
         onSelect={setSelectedCategory}
+        reportData={result?.data}
       />
     </main>
   );
 }
 
+function EvidenceAtlasRoadmap() {
+  return (
+    <section className="card atlas-roadmap" aria-labelledby="atlas-roadmap-heading">
+      <div className="section-heading atlas-heading">
+        <div><p className="step-label">Visualization roadmap</p><h2 id="atlas-roadmap-heading">Build an evidence atlas—not a person map</h2></div>
+        <span className="state-pill waiting">Planned</span>
+      </div>
+      <p className="section-intro">
+        The next visual layer should show cited, aggregate research coverage. It must never plot a person,
+        derive their location, or turn a broad research label into identity.
+      </p>
+      <div className="atlas-grid">
+        <article><span className="atlas-icon"><Icon name="map" size={22} /></span><h3>2D coverage atlas</h3><p>Region-level evidence availability with source, date, denominator, and a keyboard-accessible table.</p></article>
+        <article><span className="atlas-icon"><Icon name="layers" size={22} /></span><h3>3D evidence landscape</h3><p>Optional read-only layers for reference-panel size, validation breadth, and citation depth—not genetic clustering.</p></article>
+        <article><span className="atlas-number">03</span><h3>Plain-language fallback</h3><p>Every visual needs a sortable data view, a concise takeaway, and a visible explanation of what it cannot show.</p></article>
+      </div>
+      <p className="atlas-note">The full build brief and implementation prompt are documented with this project for the next implementation phase.</p>
+    </section>
+  );
+}
+
 function ReferencePanelChart() {
-  const [comparisonId, setComparisonId] = useState("pakistani");
+  const [comparisonId, setComparisonId] = useState("");
   const maximum = Math.max(...TOPMED_PANEL.groups.map((group) => group.count));
   const comparison = TOPMED_PANEL.groups.find((group) => group.id === comparisonId);
   const formatCount = new Intl.NumberFormat("en-US");
@@ -254,24 +406,26 @@ function ReferencePanelChart() {
   });
 
   return (
-    <section className="card" aria-labelledby="panel-chart-heading">
+    <section className="card evidence-card" id="evidence" aria-labelledby="panel-chart-heading">
       <p className="step-label">Why specificity changes</p>
       <h2 id="panel-chart-heading">One reference panel, unequal representation</h2>
       <p className="section-intro">
-        These are published sample counts from the same {TOPMED_PANEL.name} denominator of{" "}
+        These are published analytical-assignment counts from the same {TOPMED_PANEL.name} denominator of{" "}
         <strong>{formatCount.format(TOPMED_PANEL.total)}</strong>. They show who was available for
         comparison—not anyone's ancestry percentage.
       </p>
+      <p className="chart-methodology">{TOPMED_PANEL.methodology}</p>
 
       <div className="chart-control">
-        <label htmlFor="comparison-group">Highlight the closest available published label</label>
+        <label htmlFor="comparison-group">Optionally highlight one published comparison label</label>
         <select
           id="comparison-group"
           value={comparisonId}
           onChange={(event) => setComparisonId(event.target.value)}
         >
+          <option value="">No comparison highlight</option>
           {TOPMED_PANEL.groups
-            .filter((group) => group.id !== "european")
+            .filter((group) => !["european", "unassigned"].includes(group.id))
             .map((group) => (
               <option value={group.id} key={group.id}>
                 {group.label}
@@ -287,7 +441,7 @@ function ReferencePanelChart() {
         <ul className="bar-list">
           {TOPMED_PANEL.groups.map((group) => {
             const percent = (group.count / TOPMED_PANEL.total) * 100;
-            const isHighlighted = group.id === comparisonId || group.id === "european";
+            const isHighlighted = group.id === comparisonId;
             return (
               <li className={isHighlighted ? "bar-row highlighted" : "bar-row"} key={group.id}>
                 <div className="bar-heading">
@@ -305,11 +459,40 @@ function ReferencePanelChart() {
                 <a href={group.source} target="_blank" rel="noreferrer">
                   Source: {group.sourceLabel}
                 </a>
+                {group.nested && (
+                  <div className="bar-nested">
+                    <strong>{group.nested.label}:</strong>{" "}
+                    {formatCount.format(group.nested.count)} ({formatPercent.format((group.nested.count / TOPMED_PANEL.total) * 100)}% of the full r2 denominator).{" "}
+                    {group.nested.caveat}{" "}
+                    <a href={group.nested.source} target="_blank" rel="noreferrer">
+                      Source: {group.nested.sourceLabel}
+                    </a>
+                  </div>
+                )}
               </li>
             );
           })}
         </ul>
       </figure>
+
+      <details className="chart-table">
+        <summary>Read the reference-panel counts as a table</summary>
+        <div className="chart-table-scroll">
+          <table>
+            <caption>Published TOPMed r2 counts by analytical assignment</caption>
+            <thead><tr><th scope="col">Published label</th><th scope="col">Count</th><th scope="col">Share of denominator</th></tr></thead>
+            <tbody>
+              {TOPMED_PANEL.groups.map((group) => (
+                <tr key={group.id}>
+                  <th scope="row">{group.label}</th>
+                  <td>{formatCount.format(group.count)}</td>
+                  <td>{formatPercent.format((group.count / TOPMED_PANEL.total) * 100)}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </details>
 
       <div className="chart-caveat" id="chart-caveat">
         <strong>Read this carefully:</strong> labels come from the cited studies and compress diverse
@@ -331,9 +514,18 @@ function ReferencePanelChart() {
   );
 }
 
-function Results({ data }) {
-  const stats = data.stats || {};
-  if (!stats.total) {
+function Results({ data = {}, submittedPopulationLabel = "" }) {
+  const stats = isRecord(data.stats) ? data.stats : {};
+  const coverage = isRecord(data.coverage) ? data.coverage : {};
+  const totalRows = firstDefined(
+    stats.total,
+    coverage.total,
+    coverage.total_rows,
+    coverage.variant_count,
+    coverage.snps_read,
+  );
+
+  if (Number(totalRows) === 0) {
     return (
       <div className="empty-state" role="status">
         <strong>No genotype rows were detected.</strong>
@@ -341,18 +533,362 @@ function Results({ data }) {
       </div>
     );
   }
+
   return (
-    <div>
+    <div className="report">
       <div className="success-banner" role="status">
-        File parsed successfully. This confirms format and coverage only—not ancestry or health.
+        File parsed successfully. This report describes measured coverage and curated evidence—not
+        ancestry inference, exact ethnicity, or health risk.
       </div>
-      <dl className="stats-list">
-        <Row label="File" value={data.filename ?? "Not provided"} />
-        <Row label="Vendor" value={data.vendor ?? "Unknown"} />
-        <Row label="SNPs read" value={stats.total ?? 0} />
-        <Row label="No-calls" value={stats.no_calls ?? 0} />
-      </dl>
-      {data.note && <p className="note">{data.note}</p>}
+
+      <CoverageSection data={data} stats={stats} coverage={coverage} totalRows={totalRows} />
+      <TraitSection traits={data.traits} fallbackTraits={data.trait_hits} />
+      <BoundarySection boundaries={data.boundaries} fallbackRefusals={data.refusals} />
+      <TransparencySection
+        context={data.population_context}
+        transparency={data.transparency || data.reference_context}
+        submittedPopulationLabel={submittedPopulationLabel}
+      />
+      <StudiesSection studies={data.studies || data.research_bridge} />
+
+      {data.note && <p className="note report-note">{data.note}</p>}
+    </div>
+  );
+}
+
+function CoverageSection({ data, stats, coverage, totalRows }) {
+  const preferredRows = [
+    ["File", data.filename],
+    ["Vendor", data.vendor || coverage.vendor],
+    ["Chip version", data.chip_version || coverage.chip_version],
+    ["Reference build", coverage.reference_build || coverage.genome_build],
+    ["SNP rows read", totalRows],
+    ["Called genotypes", firstDefined(stats.called, coverage.called, coverage.called_rows)],
+    ["No-calls", firstDefined(stats.no_calls, coverage.no_calls, coverage.no_call_rows)],
+    ["Malformed rows skipped", firstDefined(stats.malformed, coverage.malformed, coverage.malformed_rows)],
+    [
+      "Chromosomes observed",
+      coverage.chromosome_counts ||
+        coverage.observed_chromosomes ||
+        coverage.chromosomes_observed ||
+        coverage.chromosomes,
+    ],
+  ];
+  const rows = preferredRows.filter(([, value]) => hasDisplayValue(value));
+
+  return (
+    <ReportSection id="coverage-heading" eyebrow="Parsing & coverage" title="What the file measured">
+      <p className="report-intro">
+        Coverage describes which rows were present in this consumer genotyping file. It is not a
+        measure of ancestry, identity, or overall genome quality.
+      </p>
+      {rows.length ? (
+        <dl className="stats-list report-stats">
+          {rows.map(([label, value]) => (
+            <Row label={label} value={formatValue(value)} key={label} />
+          ))}
+        </dl>
+      ) : (
+        <MissingReportData>Parser metadata was not returned for this analysis.</MissingReportData>
+      )}
+      {coverage.note && <p className="note">{coverage.note}</p>}
+    </ReportSection>
+  );
+}
+
+function TraitSection({ traits, fallbackTraits }) {
+  const traitEnvelope = isRecord(traits) ? traits : {};
+  const items = asArray(
+    Array.isArray(traits)
+      ? traits
+      : traitEnvelope.items || traitEnvelope.results || traitEnvelope.allowlisted || fallbackTraits,
+  );
+  const measuredCount = firstDefined(
+    traitEnvelope.measured_count,
+    items.filter((item) => traitIsMeasured(item)).length,
+  );
+  const interpretableCount = firstDefined(
+    traitEnvelope.interpretable_count,
+    items.filter((item) => traitIsInterpretable(item)).length,
+  );
+  const withheldCount = firstDefined(
+    traitEnvelope.withheld_count,
+    Number(measuredCount) - Number(interpretableCount),
+  );
+  const unavailableCount = firstDefined(
+    traitEnvelope.unavailable_count,
+    traitEnvelope.missing_count,
+    items.filter((item) => !traitIsMeasured(item)).length,
+  );
+
+  return (
+    <ReportSection
+      id="traits-heading"
+      eyebrow="Allowlisted traits"
+      title="Curated, non-medical markers only"
+    >
+      <div className="report-summary" aria-label="Trait coverage summary">
+        <span><strong>{formatValue(measuredCount)}</strong> measured</span>
+        <span><strong>{formatValue(interpretableCount)}</strong> interpreted</span>
+        {Number(withheldCount) > 0 && (
+          <span><strong>{formatValue(withheldCount)}</strong> withheld for build/evidence safety</span>
+        )}
+        <span><strong>{formatValue(unavailableCount)}</strong> unavailable or no-call</span>
+      </div>
+      <p className="report-intro">
+        A measured association is not a prediction. Each interpretation stays paired with its
+        evidence limits, especially when the original study population was narrow.
+      </p>
+      {items.length ? (
+        <div className="trait-list">
+          {items.map((rawItem, index) => {
+            const item = isRecord(rawItem) ? rawItem : { interpretation: String(rawItem) };
+            const measured = traitIsMeasured(item);
+            const interpretable = traitIsInterpretable(item);
+            const citations = citationList(item);
+            return (
+              <article className="trait-item" key={item.rsid || item.id || `${item.name}-${index}`}>
+                <div className="item-heading">
+                  <div>
+                    <h4>{item.name || item.title || "Allowlisted trait"}</h4>
+                    {item.rsid && <p className="metadata">Marker {item.rsid}</p>}
+                  </div>
+                  <span className={`state-pill ${interpretable ? "ready" : measured ? "refused" : "waiting"}`}>
+                    {interpretable ? "Interpreted" : measured ? "Meaning withheld" : "Not measured"}
+                  </span>
+                </div>
+                {measured && hasDisplayValue(item.genotype) && (
+                  <p className="genotype-call">
+                    Genotype in file: <strong>{formatValue(item.genotype)}</strong>
+                  </p>
+                )}
+                <div className="evidence-block">
+                  <h5>Interpretation</h5>
+                  <p>{item.interpretation || item.meaning || "No interpretation was returned."}</p>
+                </div>
+                {(item.evidence_note || item.evidence || item.population_note) && (
+                  <div className="evidence-block">
+                    <h5>Evidence and transfer limits</h5>
+                    <p>{item.evidence_note || item.evidence || item.population_note}</p>
+                  </div>
+                )}
+                {citations.length > 0 && (
+                  <div className="source-list" aria-label={`Evidence sources for ${item.name || item.rsid || "this marker"}`}>
+                    {citations.map((citation) => (
+                      <a className="source-link" href={citation.url} target="_blank" rel="noreferrer" key={citation.url}>
+                        {citation.label || `Open evidence source for ${item.name || item.rsid || "this marker"}`}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      ) : (
+        <MissingReportData>No allowlisted trait records were returned.</MissingReportData>
+      )}
+    </ReportSection>
+  );
+}
+
+function BoundarySection({ boundaries, fallbackRefusals }) {
+  const boundaryEnvelope = isRecord(boundaries) ? boundaries : {};
+  const policy =
+    boundaryEnvelope.policy_summary ||
+    (boundaryEnvelope.policy === "default-deny"
+      ? "Only the explicitly reviewed non-medical trait allowlist is interpreted; every other marker is denied by default."
+      : boundaryEnvelope.policy) ||
+    "Only the displayed, vetted non-medical markers may be interpreted; every other marker is denied by default.";
+  const honesty = asArray(
+    Array.isArray(boundaries)
+      ? boundaries
+      : boundaryEnvelope.honesty || boundaryEnvelope.limitations,
+  );
+  const requestedChecks = asArray(
+    boundaryEnvelope.requested_checks || boundaryEnvelope.refusals || fallbackRefusals,
+  );
+  const displayedHonesty = honesty.length ? honesty : DEFAULT_HONESTY_BOUNDARIES;
+
+  return (
+    <ReportSection id="boundaries-heading" eyebrow="Safety boundary" title="What this report refuses to conclude">
+      <div className="policy-banner">
+        <strong>Policy applied:</strong> {policy}
+      </div>
+      <div className="boundary-list">
+        {displayedHonesty.map((rawItem, index) => {
+          const item = normalizeBoundary(rawItem);
+          return (
+            <article className="boundary-item" key={item.category || item.title || index}>
+              <div className="item-heading compact">
+                <h4>{item.title}</h4>
+                <span className="state-pill refused">Boundary</span>
+              </div>
+              <p>{item.response}</p>
+              {item.nextStep && <p className="boundary-next-step"><strong>Safer next step:</strong> {item.nextStep}</p>}
+              {item.citation?.url && (
+                <a className="source-link" href={item.citation.url} target="_blank" rel="noreferrer">
+                  {item.citation.label || "Open boundary evidence source"}
+                </a>
+              )}
+            </article>
+          );
+        })}
+      </div>
+
+      {requestedChecks.length > 0 && (
+        <div className="requested-checks">
+          <h4>Default-deny checks returned with this report</h4>
+          <ul>
+            {requestedChecks.map((rawCheck, index) => {
+              const check = normalizeRequestedCheck(rawCheck);
+              return (
+                <li className={check.allowed ? "allowed-check" : "refused-check"} key={check.id || index}>
+                  <strong>{check.title}:</strong> {check.response}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+    </ReportSection>
+  );
+}
+
+function TransparencySection({ context, transparency, submittedPopulationLabel }) {
+  const population = isRecord(context) ? context : {};
+  const explanation = isRecord(transparency) ? transparency : {};
+  const originalLabel =
+    population.original_label || population.population_label || submittedPopulationLabel;
+  const displayLabel = population.display_label || population.canonical_label;
+  const recognized = population.recognized;
+  const populationCaveat =
+    explanation.population_note || population.caveat || asArray(population.caveats).join(" ");
+
+  return (
+    <ReportSection
+      id="transparency-heading"
+      eyebrow="Reference-panel context"
+      title={explanation.headline || "Why confidence and specificity can change"}
+    >
+      <div className="population-context">
+        <div>
+          <p className="context-label">User-supplied context</p>
+          <p className="context-value">{originalLabel || "No broad population label supplied"}</p>
+        </div>
+        <span className={`state-pill ${recognized === true ? "ready" : "waiting"}`}>
+          {recognized === true ? "Broad match" : originalLabel ? "General context" : "Not supplied"}
+        </span>
+      </div>
+      {displayLabel && displayLabel !== originalLabel && (
+        <p className="normalization-note">
+          Matched context group: <strong>{displayLabel}</strong>. This organizes explanatory sources;
+          it does not classify the uploaded DNA.
+        </p>
+      )}
+      <p className="transparency-copy">
+        {explanation.explanation ||
+          "Consumer results depend on who is represented in comparison datasets. Smaller or less diverse panels can produce broader labels and less stable detail."}
+      </p>
+      {populationCaveat && (
+        <div className="context-caveat">
+          <strong>Population-specific caveat:</strong> {populationCaveat}
+        </div>
+      )}
+      {!originalLabel && (
+        <p className="note">
+          General transparency guidance is shown because no existing result label was copied into
+          the optional field. The app did not infer one.
+        </p>
+      )}
+    </ReportSection>
+  );
+}
+
+function StudiesSection({ studies }) {
+  const studyEnvelope = isRecord(studies) ? studies : {};
+  const items = asArray(
+    Array.isArray(studies)
+      ? studies
+      : studyEnvelope.items || studyEnvelope.matches || studyEnvelope.programs,
+  );
+  const curatedAsOf = studyEnvelope.curated_as_of || studyEnvelope.checked_at;
+
+  return (
+    <ReportSection id="studies-heading" eyebrow="Research bridge" title="Dated programs to verify">
+      <div className="section-heading studies-heading">
+        <p className="report-intro">
+          These matches are starting points, not endorsements or proof of eligibility. Use the
+          official pages and read the current consent terms before sharing personal information.
+        </p>
+        {curatedAsOf && <span className="date-pill">Curated {formatDate(curatedAsOf)}</span>}
+      </div>
+      {studyEnvelope.disclaimer && <p className="study-disclaimer">{studyEnvelope.disclaimer}</p>}
+      {items.length ? (
+        <div className="study-list">
+          {items.map((rawStudy, index) => {
+            const study = isRecord(rawStudy) ? rawStudy : { name: String(rawStudy) };
+            return (
+              <article className="study-item" key={study.id || study.name || index}>
+                <div className="item-heading">
+                  <div>
+                    <h4>{study.name || "Research program"}</h4>
+                    {study.consortium && <p className="metadata">{study.consortium}</p>}
+                  </div>
+                  {typeof study.direct_enrollment === "boolean" && (
+                    <span className={`state-pill ${study.direct_enrollment ? "ready" : "waiting"}`}>
+                      {study.direct_enrollment ? "Public pathway" : "Research pathway"}
+                    </span>
+                  )}
+                </div>
+                {study.population_focus && <p>{study.population_focus}</p>}
+                <StudyDetail label="Current status" value={study.recruitment_status || study.status} />
+                <StudyDetail label="What participation may involve" value={study.participation} />
+                <StudyDetail label="Consent and privacy" value={study.consent_privacy || study.privacy} />
+                {study.status_checked && (
+                  <p className="status-date">Status checked {formatDate(study.status_checked)}</p>
+                )}
+                <div className="study-links">
+                  {isExternalUrl(study.url) && (
+                    <a href={study.url} target="_blank" rel="noreferrer">Official program page</a>
+                  )}
+                  {isExternalUrl(study.status_source) && (
+                    <a href={study.status_source} target="_blank" rel="noreferrer">Official status/privacy source</a>
+                  )}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      ) : (
+        <MissingReportData>
+          No matched study records were returned. This does not mean relevant research does not exist.
+        </MissingReportData>
+      )}
+    </ReportSection>
+  );
+}
+
+function ReportSection({ id, eyebrow, title, children }) {
+  return (
+    <section className="report-section" aria-labelledby={id}>
+      <p className="step-label">{eyebrow}</p>
+      <h3 id={id}>{title}</h3>
+      {children}
+    </section>
+  );
+}
+
+function MissingReportData({ children }) {
+  return <p className="report-empty">{children}</p>;
+}
+
+function StudyDetail({ label, value }) {
+  if (!hasDisplayValue(value)) return null;
+  return (
+    <div className="study-detail">
+      <h5>{label}</h5>
+      <p>{formatValue(value)}</p>
     </div>
   );
 }
@@ -366,10 +902,189 @@ function Row({ label, value }) {
   );
 }
 
-function QuestionGuide({ analysisReady, selected, onSelect }) {
+const DEFAULT_HONESTY_BOUNDARIES = [
+  {
+    category: "ancestry-inference",
+    title: "No ancestry re-inference",
+    response: "The uploaded genotypes are not used to generate or verify an ancestry label.",
+  },
+  {
+    category: "exact-ethnicity",
+    title: "No exact ethnicity claim",
+    response: "Genetic similarity cannot establish a person's exact ethnicity, culture, or community identity.",
+  },
+  {
+    category: "health-risk",
+    title: "No health or disease interpretation",
+    response: "Clinical and health-risk variants are outside this app's allowlist and are refused by default.",
+  },
+];
+
+function normalizeBoundary(rawItem) {
+  if (!isRecord(rawItem)) {
+    return { title: "Protected conclusion", response: String(rawItem || "Refused by design.") };
+  }
+  const category = rawItem.category || rawItem.id || rawItem.rsid;
+  const title = rawItem.title || rawItem.name || rawItem.request || category || "Protected conclusion";
+  const response =
+    rawItem.response || rawItem.reason || rawItem.message || rawItem.explanation || "Refused by design.";
+  return {
+    category,
+    title,
+    response,
+    nextStep: rawItem.next_step || rawItem.nextStep,
+    citation: citationDetails(rawItem.citation || rawItem.source),
+  };
+}
+
+function normalizeRequestedCheck(rawItem) {
+  if (!isRecord(rawItem)) {
+    return {
+      id: String(rawItem),
+      title: "Requested marker",
+      response: String(rawItem || "The marker request could not be evaluated."),
+      allowed: false,
+    };
+  }
+  const marker = rawItem.rsid || rawItem.id || "Requested marker";
+  const allowed = rawItem.allowed === true && rawItem.refused !== true;
+  return {
+    id: marker,
+    title: marker,
+    allowed,
+    response: allowed
+      ? "Allowed by policy; any available interpretation appears in the trait section above."
+      : rawItem.reason || rawItem.message || "Outside the allowlist and refused without interpretation.",
+  };
+}
+
+function traitIsMeasured(item) {
+  if (!isRecord(item)) return false;
+  if (typeof item.measured === "boolean") return item.measured;
+  if (typeof item.available === "boolean") return item.available;
+  if (typeof item.status === "string") return item.status.toLowerCase() === "measured";
+  return hasDisplayValue(item.genotype);
+}
+
+function traitIsInterpretable(item) {
+  if (!isRecord(item)) return false;
+  if (typeof item.interpretable === "boolean") return item.interpretable;
+  return traitIsMeasured(item);
+}
+
+function citationList(item) {
+  if (!isRecord(item)) return [];
+  const candidates = [item.citation || item.source, ...asArray(item.citations)];
+  const seen = new Set();
+  return candidates
+    .map((citation) => citationDetails(citation))
+    .filter((citation) => citation.url && !seen.has(citation.url) && seen.add(citation.url));
+}
+
+function citationDetails(citation) {
+  if (typeof citation === "string") {
+    return isExternalUrl(citation) ? { url: citation, label: "Open evidence source" } : {};
+  }
+  if (!isRecord(citation)) return {};
+  const url = citation.url || citation.href;
+  return isExternalUrl(url)
+    ? { url, label: citation.label || citation.title || citation.name }
+    : {};
+}
+
+function isRecord(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function asArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function firstDefined(...values) {
+  return values.find((value) => value !== undefined && value !== null && value !== "");
+}
+
+function hasDisplayValue(value) {
+  return value !== undefined && value !== null && value !== "";
+}
+
+function formatValue(value) {
+  if (typeof value === "number") return new Intl.NumberFormat("en-US").format(value);
+  if (Array.isArray(value)) return value.join(", ");
+  if (isRecord(value)) {
+    return Object.entries(value)
+      .map(([key, item]) => `${key.replaceAll("_", " ")}: ${item}`)
+      .join(", ");
+  }
+  return String(value);
+}
+
+function formatDate(value) {
+  const text = String(value);
+  const date = new Date(/^\d{4}-\d{2}-\d{2}$/.test(text) ? `${text}T00:00:00Z` : text);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(date);
+}
+
+function isExternalUrl(value) {
+  if (typeof value !== "string") return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
+function QuestionGuide({ analysisReady, selected, onSelect, reportData }) {
   const active = ANSWER_CATEGORIES.find((category) => category.id === selected);
+  const [narratives, setNarratives] = useState({});
+  const lastReportRef = useRef(reportData);
+
+  useEffect(() => {
+    if (lastReportRef.current !== reportData) {
+      lastReportRef.current = reportData;
+      setNarratives({});
+    }
+  }, [reportData]);
+
+  async function fetchNarrative(categoryId) {
+    setNarratives((prev) => ({ ...prev, [categoryId]: { status: "loading" } }));
+    try {
+      const response = await fetch("/api/narrative", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category: categoryId, report: reportData }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setNarratives((prev) => ({
+          ...prev,
+          [categoryId]: { status: "error", error: data.error || `Request failed (HTTP ${response.status}).` },
+        }));
+        return;
+      }
+      setNarratives((prev) => ({
+        ...prev,
+        [categoryId]: { status: "ready", content: data.content, citations: data.citations || [] },
+      }));
+    } catch {
+      setNarratives((prev) => ({
+        ...prev,
+        [categoryId]: { status: "error", error: "We could not reach the AI explanation service." },
+      }));
+    }
+  }
+
+  const activeNarrative = active ? narratives[active.id] : null;
+
   return (
-    <section className="card" aria-labelledby="questions-heading">
+    <section className="card" id="questions" aria-labelledby="questions-heading">
       <div className="section-heading">
         <div>
           <p className="step-label">Explore by question</p>
@@ -407,6 +1122,46 @@ function QuestionGuide({ analysisReady, selected, onSelect }) {
                 ? "Use this lens when reviewing the guided result; answers must stay within the cited evidence."
                 : "Analyze a file first so the question can be grounded in measured coverage and broad context."}
             </p>
+
+            {analysisReady && (
+              <div className="narrative-block">
+                {(!activeNarrative || activeNarrative.status === "error") && (
+                  <button className="secondary-button" type="button" onClick={() => fetchNarrative(active.id)}>
+                    Get a Gradient AI cited answer
+                  </button>
+                )}
+                {activeNarrative?.status === "loading" && (
+                  <p className="loading-message" role="status" aria-live="polite">
+                    <span className="spinner" aria-hidden="true" /> Asking Gradient AI…
+                  </p>
+                )}
+                {activeNarrative?.status === "error" && (
+                  <p className="error" role="alert">
+                    {activeNarrative.error}
+                  </p>
+                )}
+                {activeNarrative?.status === "ready" && (
+                  <div className="narrative-answer">
+                    <p>{activeNarrative.content}</p>
+                    {activeNarrative.citations.length > 0 && (
+                      <div className="source-list" aria-label="AI answer sources">
+                        {activeNarrative.citations.map((citation) => (
+                          <a
+                            className="source-link"
+                            href={citation.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            key={citation.url}
+                          >
+                            {citation.label || "Open source"}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </>
         ) : (
           <p className="empty-state">No category selected. Use any card above to reveal a suggested question.</p>

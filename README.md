@@ -2,15 +2,90 @@
 
 An interpretation & transparency layer on top of consumer DNA results. Upload a
 23andMe raw file and get a plain-language explanation of what it tells you — and,
-crucially, **why the answer is vague if you're not of European descent**
-(reference-panel bias). We are *not* an ancestry tool; we are an audit layer for
-ancestry tools.
+crucially, **why confidence and specificity can weaken when the underlying
+evidence underrepresents a population** (reference-panel bias). We are *not* an
+ancestry tool; we are an audit layer for ancestry tools.
 
 Built for **AI for Social Good — Hack with MLH & DigitalOcean** (SF, Jul 10–11 2026)
-on the **DigitalOcean Gradient AI Platform**.
+and designed for deployment on the **DigitalOcean Gradient AI Platform**. The
+local guided-report product is complete; live DigitalOcean provisioning is a
+separately owned handoff and is not claimed as verified below.
 
 ## Iteration log
 
+- **2026-07-11 — Local demo completion (started):** Finish every local,
+  non-DigitalOcean part of the demo: strict 23andMe validation, in-memory upload
+  handling, deterministic report assembly, explicit refusal behavior, broad-label
+  context supplied by the user, complete React report rendering, integration
+  tests, and submission documentation. DigitalOcean provisioning, managed
+  Knowledge Base work, runtime credentials, and live deployment are being handled
+  separately and are intentionally out of scope for this pass.
+- **2026-07-11 — Workspace credential hygiene (completed):** Excluded exported
+  AI-session transcripts from Git because they may contain pasted credentials.
+  Confirmed the reachable committed history has no DigitalOcean token-shaped
+  strings. Any credential previously pasted into a transcript must still be
+  rotated in its issuing console; transcript contents are not application config.
+- **2026-07-11 — Safety and population context (completed):** Implemented a
+  tested default-deny boundary that permits only the non-medical trait allowlist,
+  gives content-neutral refusals for every other rsID, and returns deterministic
+  honesty responses for health risk, ancestry re-inference, and exact ethnicity.
+  Added exact-match normalization for an optional user-supplied broad population
+  label; genotype data never enters the normalization function and the response
+  always records `inferred_from_dna: false`.
+- **2026-07-11 — Deterministic guided-report model (completed):** Added a local,
+  service-independent report assembler that combines allowlisted traits, missing
+  chip coverage, safety boundaries, population context, evidence-transfer
+  transparency, and the dated research bridge without exposing the raw genome.
+  Repeated input produces identical output, and focused safety/context/report
+  validation passes (`10 passed`).
+- **2026-07-11 — Pitch-document scaffold (completed):** Added a timed
+  three-minute demo script, a four-slide narrative, and a submission checklist.
+  DigitalOcean claims are deliberately bracketed until the separately owned live
+  agent, retrieval, guardrail, and App Platform checks have evidence.
+- **2026-07-11 — Complete guided-report UI (completed):** Added an optional
+  broad population-label field that is explicitly copied from an existing result
+  and never inferred. The React result view now renders parser coverage,
+  allowlisted measured/missing traits with evidence links, default-deny and
+  honesty boundaries, reference-panel context, and dated studies with official
+  status and consent/privacy links. Partial-response fallbacks, keyboard focus,
+  reduced motion, dark mode, forced colors, and responsive layouts are preserved;
+  the Vite production build passes.
+- **2026-07-11 — Strict parser and real-PGP validation (completed):** Production
+  uploads now require the recognizable 23andMe signature and canonical columns;
+  malformed marker IDs, chromosomes, positions, and genotypes are rejected or
+  counted without echoing raw rows. Added exact no-call, duplicate/conflict,
+  call-rate, chromosome, MT/Y, explicit build, and conservative chip-metadata
+  handling. Duplicate counts cover the complete file; conflicting-duplicate
+  checks are explicitly labeled as scoped to retained allowlist markers in the
+  memory-bounded API path. Full open-consent PGP v3, v4, and v5 exports parsed with zero
+  malformed rows (963,050; 601,895; and 638,573 valid-position counts).
+  Their headers do not explicitly name chip generation, so the parser correctly
+  leaves `chip_version` unknown rather than guessing from marker counts.
+- **2026-07-11 — Bounded-memory and privacy-safe API (completed):** The complete
+  `/api/analyze` route now validates the upload, keeps multipart bytes in RAM
+  instead of Werkzeug's default disk-spooled temporary file, disables response
+  caching, retains only allowlisted genotype calls, and returns the deterministic
+  traits/boundaries/context/studies report without the raw genome. Selected-marker
+  parsing reduced v5 peak parser RSS from about 426 MB to 133 MB; sequential full
+  API checks over all three PGP exports peaked near 221 MB. Invalid extension,
+  encoding, header/vendor, empty, missing, and oversized uploads return stable
+  JSON errors.
+- **2026-07-11 — Scientific evidence correction pass (completed):** Audited the
+  trait and chart claims against primary sources. Removed a non-portable universal
+  photic-sneeze allele direction; combined TAS2R38 into one conservative,
+  unphased three-marker haplotype result; fail closed unless GRCh37 plus-strand
+  orientation is verified; updated lactase, ACTN3, cilantro, and earwax support;
+  and added multi-source citations. Rebuilt the TOPMed r2 chart from the mutually
+  exclusive 97,256-person primary breakdown, nested the Pakistani subset under
+  South Asian rather than plotting it as a peer population, added the unassigned
+  count, and corrected the historical 96% metric from “studies” to “participants.”
+- **2026-07-11 — Local verification (completed):** `69` Python tests pass across
+  parsing, traits, boundaries, ancestry context, studies, deterministic reports,
+  upload privacy, and Flask integration. Four Node data/interaction tests pass,
+  the React production build succeeds, and the full API returns HTTP 200 for the
+  three real PGP validation exports. Local visual QA confirmed the upload shell,
+  corrected chart hierarchy, accessible labels, and keyboard-operable question
+  cards in a clean guest browser.
 - **2026-07-11 — Repository publish (started):** Inspect local/remote divergence,
   preserve unrelated working-tree changes, integrate the existing remote commit
   safely, and push the completed feature commits to `origin/main`.
@@ -38,9 +113,10 @@ on the **DigitalOcean Gradient AI Platform**.
 - **2026-07-11 — Reference-panel visualization (completed):** Added an
   accessible, dependency-free TOPMed r2 sample-count chart with a shared 97,256
   denominator, selectable comparison highlight, per-bar primary citations, and
-  explicit label/coverage caveats. Kept the historical 96%-of-GWAS metric in a
-  separately sourced context card. Confirmed with a Vite production build and
-  all five parser tests.
+  explicit label/coverage caveats. Kept the historical finding that 96% of the
+  GWAS participants assessed in 2009 were of European descent in a separately
+  sourced context card. Confirmed with a Vite production build and all five
+  parser tests.
 - **2026-07-11 — Frontend states and accessibility (started):** Preserve the
   current upload/analyze endpoint flow while adding explicit loading, empty, and
   error feedback; keyboard/focus improvements; readable high-contrast styling;
@@ -82,16 +158,39 @@ on the **DigitalOcean Gradient AI Platform**.
   entries with build-37 plus-strand genotype maps, population/evidence caveats,
   deterministic missing-chip handling, and lookup output fields for interpretation,
   evidence, and citation. Confirmed with `8 passed` across trait and parser tests.
+- **2026-07-11 — Non-DigitalOcean product pass (completed):** Replaced the stale
+  roadmap with the actual acceptance state, checked off every locally verified
+  product requirement, documented open-consent validation samples and submission
+  assets, and isolated all unverified agent, Knowledge Base, credential, and live
+  deployment work in the DigitalOcean handoff. Final local verification commands
+  and remaining submission placeholders are listed below.
+- **2026-07-11 — Final local edge-case audit (completed):** Disabled Flask's
+  direct-run debugger and limited it to localhost, bounded numeric parser fields
+  so hostile rows fail safely, rejected contradictory vendor signatures, exposed
+  retained-marker conflict scope in the API, and froze file replacement while an
+  analysis is in flight. Added regression coverage and reran the full local gate:
+  `69` Python tests, `4` Node tests, and the production frontend build pass.
+- **2026-07-11 — Evidence-console UI direction (completed):** Reworked the
+  frontend hierarchy around provenance, restraint, and legibility: a safeguard
+  rail, clearer report preview, an optional (never preselected) chart highlight,
+  and a screen-reader-friendly data table. Added a safe 2D/3D evidence-atlas
+  implementation brief: future visuals may show cited aggregate evidence only;
+  they must never locate or classify a person from their DNA.
 
 ## Hard boundaries (by design, not just policy)
 - No ancestry inference — interpretation only.
 - No health/disease claims — traits are illustrative and non-medical only.
 - No fine-grained ethnicity claims beyond what the literature supports.
-- Privacy-first: uploaded files are processed **in memory and never stored**.
+- Privacy-first: application code processes uploads **in memory, does not
+  intentionally persist them, and never returns the raw genome**.
 
 ## Data ethics
 Demo data is from the **Harvard Personal Genome Project** (open-consent, public).
-The PGP dataset is itself majority-European — it is our own Exhibit A for the bias.
+Public PGP records are used only to validate file-format and chip-coverage
+behavior; they are not treated as a representative population sample and their
+profile text is never converted into an ancestry label. See
+[`data/samples/README.md`](data/samples/README.md) for the exact open-consent v3,
+v4, and v5 validation records.
 
 ## Run locally
 
@@ -99,91 +198,105 @@ Backend (Flask API):
 ```bash
 python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env          # fill in keys when available (optional for step one)
-python -m backend.app          # API on http://localhost:8080 (PORT=8091 if 8080 is busy)
-python -m pytest -q            # run parser tests
+python -m backend.app          # API on http://localhost:8080
+python -m pytest -q            # full Python suite
 ```
+
+No DigitalOcean key or `.env` file is required for the deterministic local
+report. `.env.example` documents credentials only for the separately owned live
+agent/deployment extension.
 
 Frontend (React + Vite):
 ```bash
 cd frontend && npm install
 npm run dev                    # dev server on http://localhost:5173, proxies /api to Flask
-# or build the production bundle that Flask serves:
+npm test                       # frontend data/interaction tests
 npm run build                  # -> frontend/dist, served by Flask at /
 ```
 
-## Deploy (DigitalOcean App Platform)
+## Build status
+
+### Local product — complete
+
+- Strict 23andMe text validation with exact call/no-call, malformed, duplicate,
+  chromosome, reference-build, and coverage accounting; the API reports that
+  conflicting-duplicate checks are scoped to retained allowlist markers.
+- Selected-marker retention and an in-memory multipart request stream: raw genome
+  uploads are neither written to disk nor returned by the API.
+- Deterministic `/api/analyze` report assembly with stable JSON errors, no-store
+  headers, safe filenames, and no dependency on a live model.
+- Default-deny interpretation boundaries, three explicit honesty limitations,
+  and optional broad population context that is copied from the user rather than
+  inferred from DNA.
+- Conservative GRCh37-plus-strand trait interpretations, missing-chip handling,
+  multi-source evidence links, and a single unphased TAS2R38 result.
+- Complete responsive React report: parsing coverage, measured/withheld/missing
+  traits, citations, population context, honest limits, studies, and accessible
+  interaction states.
+- Corrected TOPMed r2 reference-panel chart with a shared denominator, nested
+  Pakistani subset, unassigned count, methodology caveat, and integrity tests.
+- Dated research bridge with participation, status, consent/privacy context, and
+  official sources.
+- Real open-consent PGP v3/v4/v5 API validation, 69 Python tests, four Node
+  data/interaction tests, a successful production build, and local visual QA.
+
+### DigitalOcean handoff — owned separately
+
+Nothing in this section is claimed complete until the deployment owner verifies
+it against the active account. The prepared local artifacts are `.do/app.yaml`,
+`Dockerfile`, `.env.example`, `agent/system_prompt.md`, `data/kb_sources/`,
+`scripts/create_kb.sh`, `evals/agent_behavior.jsonl`, and `scripts/run_evals.sh`.
+
+- [ ] Rotate every model, agent, or control-plane credential pasted into any log.
+- [ ] Validate the App Platform spec and set runtime secrets in App Platform.
+- [ ] Deploy the current repository revision and record the live URL/revision.
+- [ ] Create or select the agent; verify its model, prompt, and guardrail settings.
+- [ ] Create/select the Knowledge Base, index the prepared sources, attach it,
+      and verify retrieval on the demo prompts.
+- [ ] Finish and test the optional `backend/gradient_client.py` agent response
+      and retrieval-citation mapping before advertising model-generated answers.
+- [ ] Run live health, valid/invalid upload, refresh, citation, refusal, and
+      fallback smoke checks. Start a billable evaluation only with explicit
+      approval and manually review its judge rationales.
+
+The deterministic guided report remains the safe demo path if the live agent is
+not verified. It does not require any DigitalOcean credential.
+
+### Submission materials
+
+- [`docs/demo-script.md`](docs/demo-script.md) — timed three-minute narration.
+- [`docs/slides-outline.md`](docs/slides-outline.md) — four-slide story and proof
+  points.
+- [`docs/submission-checklist.md`](docs/submission-checklist.md) — local,
+  DigitalOcean, and publishing acceptance checks.
+- [`data/samples/README.md`](data/samples/README.md) — reproducible open-consent
+  v3/v4/v5 validation records.
+- [`docs/ui-visualization-roadmap.md`](docs/ui-visualization-roadmap.md) — safe
+  2D/3D evidence-atlas specification and copy-ready implementation prompt.
+
+The recording, live URL, final screenshots, team credits, and bracketed
+DigitalOcean claims must be filled only after the separate deployment handoff.
+
+### Verification commands
+
 ```bash
-doctl auth init                          # paste a dop_v1_* token
-doctl apps create --spec .do/app.yaml    # deploys from GitHub, autodeploy on push
-```
-Runs via `gunicorn --timeout 120 backend.app:app` on port 8080 (see `Dockerfile`).
-
-## DigitalOcean Gradient AI
-Three separate credentials (see `.env.example`): a **model access key** (serverless
-inference / fallback), an **agent access key** (RAG agent endpoint), and a
-**`dop_v1_*` token** (control-plane, e.g. Knowledge Base creation). The agent is
-called at `$GRADIENT_AGENT_ENDPOINT/api/v1/chat/completions` with
-`include_retrieval_info: true` for citations. Only the **Sensitive-Data** guardrail
-is attached (Content-Moderation false-positives on genomic text).
-
-### Evaluation regression set
-
-The small model-evaluation dataset at `evals/agent_behavior.jsonl` checks cited
-answers, medical refusal, precise-ancestry refusal, and reference-panel-bias
-explanations. Validate and discover resource IDs first:
-
-```bash
+python -m pip check
+python -m pytest -q
+npm --prefix frontend test
+npm --prefix frontend run build
+bash -n scripts/create_kb.sh scripts/run_evals.sh
+scripts/create_kb.sh --list >/dev/null
 scripts/run_evals.sh --check
-scripts/run_evals.sh --resources
+git diff --check
 ```
 
-Then set `DO_EVAL_CANDIDATE_MODEL_UUID`, `DO_EVAL_JUDGE_MODEL_UUID`, and
-comma-separated `DO_EVAL_METRIC_UUIDS` in the environment and explicitly run:
+### Final acceptance status
 
-```bash
-scripts/run_evals.sh --upload-and-run
-scripts/run_evals.sh --status <evaluation-run-uuid>
-```
-
-DigitalOcean's `/model_evaluation_runs` API evaluates a serverless candidate
-model using `agent/system_prompt.md`; it does not execute the deployed RAG agent.
-Use the Agent Platform workspace evaluation UI for retrieval/context-quality
-metrics, and manually review LLM-judge rationales before changing production.
-
-## Build status & roadmap
-
-### ✅ Completed (Step 1 + React conversion)
-- **Repo scaffold & deploy config** — multi-stage `Dockerfile` (Node builds React → Python serves it), App Platform spec (`.do/app.yaml`), `.env.example` with the three credentials separated, `requirements.txt`.
-- **23andMe parser** (`backend/parser.py`) — reads the real TSV format, handles the `#` header block, no-calls (`--`), malformed lines, and treats a missing rsID as "not measured on your chip." **5/5 parser tests pass.**
-- **React (Vite) upload UI** (`frontend/`) — drag-and-drop, theme-aware, privacy notice; Flask serves the built bundle so it stays one service on one URL.
-- **Working pipeline** — upload → parse → stats, verified through the production `gunicorn backend.app:app` entrypoint.
-- **Skeletons with contracts + TODOs** for every remaining module (`traits`, `boundaries`, `ancestry`, `gradient_client`, `studies`), plus the agent system prompt draft, KB scripts, and `doctl` installed.
-
-### ⏳ Remaining — Spine (must-have for the demo)
-Each step is gated behind the parse that already works.
-
-2. **Deploy live** *(P3)* — run `doctl auth init` (needs a `dop_v1_*` token), then `doctl apps create --spec .do/app.yaml`. Get the `.ondigitalocean.app` URL up **early** so there's always something demoable.
-3. **Real test data + parser hardening** *(P1)* — download 2–3 real PGP files (one non-European-labeled as the contrast case); harden the parser for chip version (v3/v4/v5), genetic-sex (XX/XY), and MT/Y rows against them.
-4. **Cited trait allowlist** *(P1)* — the heart of the project. Fill `traits.py` with 6–8 vetted **non-medical** SNPs (lactase persistence, earwax, PTC bitter taste, photic sneeze…), each with a genotype→meaning map **and a cited "validated in ~X% European cohort → why the inference is weaker for your group" line.**
-5. **Default-deny refusal** *(P1)* — `boundaries.py` refuses anything not on the allowlist (covers APOE/BRCA automatically) and encodes the "honesty" answers: no finer breakdown, no health risk, no exact ethnicity beyond the literature.
-6. **Ancestry context** *(P1)* — normalize the broad label the user's test already gave them and assemble the query context object.
-7. **Deterministic guided report** *(P1+P3)* — the demo centerpiece: wire parse → traits → refusals → the "why it's vague for your group" reveal → studies into `/api/analyze`, and render it in the React UI. Renders identically every time (no live-chat variance).
-8. **Provision + wire the Gradient AI agent** *(P2)* — create the agent (console or `doctl genai`), attach the **Sensitive-Data** guardrail, paste in `agent/system_prompt.md`; implement `gradient_client.explain()` (agent path with `include_retrieval_info` citations, serverless-inference fallback). Put the agent keys in `.env`.
-9. **Studies bridge** *(P4)* — expand `studies.json`, match by population, render in the UI (clearly dated / "verify before acting").
-10. **GO/NO-GO checkpoint (~hour 10)** — full spine works end-to-end on the live URL. Green → start stretch. Not green → freeze scope and polish the spine.
-
-### 🌟 Remaining — Stretch (only after the checkpoint is green)
-11. **Real Knowledge Base** *(P2)* — web-crawler data sources over population-genetics pages (see `data/kb_sources/README.md`) → enables the free-form **6-category chat** (interpretation · reference-panel transparency · population history · trait validation · research bridge · meta/honesty).
-12. **Reference-panel bias bar chart** — sample counts by population; targets the *Best Use of Data* track.
-13. **Expand the SNP allowlist** and add **agent evaluation tests** (targets the *Technology* criterion).
-
-### 📣 Remaining — Pitch & docs
-14. **Finalize** *(P4)* — README polish, the required **3-minute demo video** (problem → live demo → the refusal/"why vague" moment → DO stack callout), and 3–4 slides.
-
-### ✔️ Pre-submission verification
-1. Parser handles `--`, header, absent rsID, and v3/v4/v5 without crashing.
-2. An APOE/BRCA rsID is refused by default-deny.
-3. Agent returns a cited narrative; Sensitive-Data guardrail doesn't block genomic text; fallback works with `AGENT_ENDPOINT` unset.
-4. Live end-to-end on the `.ondigitalocean.app` URL — rehearse this path.
-5. Uploaded files are processed in memory, never persisted.
+- [x] Strict local parser and real v3/v4/v5 validation.
+- [x] Privacy-safe deterministic API and complete guided report.
+- [x] Non-medical default-deny boundaries and honest limitations.
+- [x] Evidence-audited trait layer, population context, chart, and studies.
+- [x] Responsive accessible frontend and local production-path visual QA.
+- [x] Automated Python/frontend checks and submission-document scaffolds.
+- [ ] Live DigitalOcean agent, Knowledge Base, guardrails, and App Platform proof.
+- [ ] Final live screenshots, URLs, demo recording, and Devpost submission.
