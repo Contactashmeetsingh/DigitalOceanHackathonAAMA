@@ -13,13 +13,15 @@ publishing checks remain intentionally open until the final targeted index.
 - [x] Backend endpoints for the trait-network (`/api/comparison-cohort`) and
       globe (`/api/population-map`) surfaces are implemented and return a
       mandatory `disclaimer`/`citations` payload.
-- [ ] Frontend renders the trait-network as explicitly synthetic and the globe
+- [x] Frontend renders the trait-network as explicitly synthetic and the globe
       as real cited reference populations, using each response's `disclaimer`.
       Both are now mounted in `App.jsx` (previously built and tested but never
       rendered) and live-verified end-to-end against the deployed API
-      2026-07-11 (commit `d87b13e`, deployment `c163c596`); 24 frontend tests
-      and the production build pass. Actual in-browser WebGL/3D visual QA
-      remains — no browser-automation tool was available this pass.
+      2026-07-11 (commit `d87b13e`, deployment `c163c596`). The replacement
+      full-viewport Globe.gl Earth UI preserves that same data contract; 26
+      frontend tests and the production build pass. Hardware-accelerated Chrome
+      rendered the real scene and verified reference selection/camera movement;
+      desktop/mobile and no-WebGL fallback layouts were also checked locally.
 - [x] Frontend/backend integration contract is documented and locally checked,
       including the `/api/comparison-cohort` and `/api/population-map`
       endpoint specs for the trait-network and 3D globe surfaces.

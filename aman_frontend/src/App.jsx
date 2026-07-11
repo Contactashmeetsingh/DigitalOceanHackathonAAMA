@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { analyzeGenome, requestComparisonCohort, requestPopulationMap } from "./api.js";
-import AncestryGlobe from "./components/AncestryGlobe.jsx";
+import ImmersiveEarth from "./components/ImmersiveEarth.jsx";
 import ResearchWorkspace from "./components/ResearchWorkspace.jsx";
 import TraitNetwork from "./components/TraitNetwork.jsx";
 import { TOPMED_PANEL } from "./referencePanelData.js";
@@ -424,7 +424,7 @@ export default function App() {
           dataStatus={cohortStatus}
         />
 
-        <AncestryGlobe
+        <ImmersiveEarth
           populationLabel={result?.submittedPopulationLabel || populationLabel.trim()}
           populationMapData={populationMapData}
           dataStatus={populationMapStatus}

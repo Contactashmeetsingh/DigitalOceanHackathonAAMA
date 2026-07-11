@@ -74,6 +74,21 @@ ingested; the source-linked crawler-safe dossier is the supported retrieval path
 
 ## Iteration log
 
+- **2026-07-11 — Full-viewport Globe.gl Earth experience (completed locally):**
+  Added a new isolated `ImmersiveEarth` component based on the supplied
+  `globe.gl` repository. The section fills the viewport below the sticky header,
+  lazy-loads WebGL, renders local Natural Earth country geometry, supports
+  orbit/zoom and accessible reference selection, and keeps a CSS fallback for
+  WebGL-disabled browsers. The existing backend-connected Earth component is
+  preserved untouched; the app shell changes only its import and mounted tag,
+  so the newly committed `populationMapData` wiring continues through the same
+  props. All 26 frontend tests and the Vite production build pass. The section
+  was visually verified at 1440×1000 and 390×844, including the no-WebGL
+  fallback; hardware-accelerated Chrome rendered the real Globe.gl scene and
+  confirmed that selecting a reference updates the inspector and animates the
+  camera. The Globe.gl engine remains lazy-loaded outside the initial bundle.
+  DigitalOcean activation and live smoke verification remain.
+
 - **2026-07-11 — Single-frontend Google-color release (completed locally):**
   Removed the redundant generated `frontend/` tree so `aman_frontend/` is the
   sole Vite source. Replaced the black/purple presentation with a light
@@ -634,7 +649,7 @@ npm run build                  # -> aman_frontend/dist; Docker copies it to /app
   Pakistani subset, unassigned count, methodology caveat, and integrity tests.
 - Dated research bridge with participation, status, consent/privacy context, and
   official sources.
-- Real open-consent PGP v3/v4/v5 API validation, 104 Python tests, 24 Node
+- Real open-consent PGP v3/v4/v5 API validation, 104 Python tests, 26 Node
   data/interaction tests, a successful production build, and local visual QA.
 - [x] `/api/comparison-cohort` (synthetic, cited cohort graph) and
       `/api/population-map` (real, cited reference populations) backend

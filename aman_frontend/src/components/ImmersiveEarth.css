@@ -1,0 +1,287 @@
+.immersive-earth {
+  position: relative;
+  width: 100vw;
+  height: calc(100svh - 70px);
+  min-height: 640px;
+  margin-inline: calc(50% - 50vw);
+  overflow: hidden;
+  isolation: isolate;
+  color: #f8f9fa;
+  background:
+    radial-gradient(circle at 72% 46%, rgb(66 133 244 / 24%), transparent 29rem),
+    linear-gradient(135deg, #050814 0%, #071329 48%, #03050c 100%);
+  border-block: 1px solid rgb(255 255 255 / 10%);
+  scroll-margin-top: 70px;
+}
+
+.immersive-earth-stage {
+  position: absolute;
+  z-index: 1;
+  inset: 0 0 0 clamp(180px, 19vw, 360px);
+}
+
+.immersive-earth-stage canvas {
+  display: block;
+  touch-action: pan-y !important;
+}
+
+.immersive-earth-fallback {
+  position: absolute;
+  z-index: 0;
+  display: grid;
+  inset: 0 0 0 30%;
+  place-items: center;
+  opacity: 0;
+  transition: opacity 240ms ease;
+}
+
+.immersive-earth-stage[data-render-state="fallback"] + .immersive-earth-fallback,
+.immersive-earth-stage[data-render-state="waiting"] + .immersive-earth-fallback,
+.immersive-earth-stage[data-render-state="loading"] + .immersive-earth-fallback {
+  opacity: 1;
+}
+
+.fallback-earth-orb {
+  display: block;
+  width: min(74vw, 1000px);
+  filter: drop-shadow(0 0 60px rgb(66 133 244 / 34%));
+}
+
+.fallback-earth-grid { fill: none; stroke: rgb(232 240 254 / 17%); stroke-width: 1; }
+.fallback-earth-land { fill: #8ab4f8; fill-opacity: .7; stroke: #d2e3fc; stroke-opacity: .34; stroke-width: 1; }
+.fallback-earth-outline { fill: none; stroke: rgb(232 240 254 / 54%); stroke-width: 1.5; }
+
+.immersive-earth-shade {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgb(3 5 12 / 96%) 0%, rgb(3 5 12 / 73%) 27%, transparent 58%),
+    linear-gradient(0deg, rgb(3 5 12 / 94%) 0%, transparent 30%),
+    radial-gradient(circle at 50% 50%, transparent 45%, rgb(3 5 12 / 25%) 100%);
+}
+
+.immersive-earth-copy {
+  position: absolute;
+  z-index: 3;
+  width: min(42rem, 47vw);
+  top: clamp(54px, 9vh, 96px);
+  left: clamp(30px, 6vw, 94px);
+}
+
+.immersive-earth-kicker {
+  display: flex;
+  margin: 0 0 24px;
+  align-items: center;
+  gap: 10px;
+  color: #a8c7fa;
+  font-size: .7rem;
+  font-weight: 760;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.immersive-earth-kicker span {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  color: #071329;
+  background: #8ab4f8;
+  border-radius: 50%;
+}
+
+.immersive-earth-copy h2 {
+  max-width: 9ch;
+  margin: 0;
+  color: #fff;
+  font-family: var(--display);
+  font-size: clamp(3.35rem, 6.2vw, 7rem);
+  font-weight: 430;
+  line-height: .92;
+  letter-spacing: -.065em;
+}
+
+.immersive-earth-copy > p:last-child {
+  max-width: 48ch;
+  margin: 28px 0 0;
+  color: #bdc1c6;
+  font-size: clamp(.9rem, 1.15vw, 1.1rem);
+  line-height: 1.65;
+}
+
+.immersive-earth-status {
+  position: absolute;
+  z-index: 4;
+  display: flex;
+  top: 32px;
+  right: 34px;
+  padding: 11px 14px;
+  align-items: center;
+  gap: 10px;
+  background: rgb(5 8 20 / 68%);
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 999px;
+  box-shadow: 0 12px 34px rgb(0 0 0 / 18%);
+  backdrop-filter: blur(16px);
+}
+
+.earth-status-dot {
+  width: 8px;
+  height: 8px;
+  background: #fbbc04;
+  border-radius: 50%;
+  box-shadow: 0 0 0 5px rgb(251 188 4 / 12%);
+}
+
+.earth-status-dot.ready { background: #34a853; box-shadow: 0 0 0 5px rgb(52 168 83 / 14%); }
+.earth-status-dot.fallback { background: #ea4335; box-shadow: 0 0 0 5px rgb(234 67 53 / 13%); }
+.immersive-earth-status small,
+.immersive-earth-status strong { display: block; }
+.immersive-earth-status small { color: #9aa0a6; font-size: .62rem; }
+.immersive-earth-status strong { margin-top: 2px; color: #f8f9fa; font-size: .72rem; }
+
+.immersive-earth-notice {
+  position: absolute;
+  z-index: 4;
+  top: 98px;
+  right: 34px;
+  max-width: 28rem;
+  margin: 0;
+  padding: 9px 12px;
+  color: #e8f0fe;
+  font-size: .72rem;
+  background: rgb(23 78 166 / 72%);
+  border-radius: 8px;
+  backdrop-filter: blur(12px);
+}
+
+.immersive-earth-notice.warning { color: #202124; background: #fdd663; }
+
+.immersive-earth-inspector {
+  position: absolute;
+  z-index: 4;
+  display: grid;
+  width: min(40rem, 46vw);
+  left: clamp(30px, 6vw, 94px);
+  bottom: 138px;
+  padding: 18px 20px;
+  grid-template-columns: 5px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 15px;
+  background: rgb(5 8 20 / 74%);
+  border: 1px solid rgb(255 255 255 / 15%);
+  border-radius: 14px;
+  box-shadow: 0 22px 60px rgb(0 0 0 / 28%);
+  backdrop-filter: blur(20px);
+}
+
+.earth-inspector-color { width: 5px; height: 100%; min-height: 58px; border-radius: 999px; }
+.immersive-earth-inspector small { color: #9aa0a6; font-size: .61rem; letter-spacing: .08em; text-transform: uppercase; }
+.immersive-earth-inspector h3 { margin: 4px 0 0; color: #fff; font-size: 1rem; }
+.immersive-earth-inspector p { max-width: 54ch; margin: 5px 0 0; color: #bdc1c6; font-size: .7rem; line-height: 1.45; }
+.immersive-earth-inspector > strong { max-width: 12ch; color: #8ab4f8; font-size: .72rem; line-height: 1.4; text-align: right; }
+
+.immersive-earth-locations {
+  position: absolute;
+  z-index: 5;
+  display: flex;
+  right: 22px;
+  bottom: 68px;
+  left: 22px;
+  padding: 8px;
+  gap: 7px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  background: rgb(5 8 20 / 76%);
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 13px;
+  backdrop-filter: blur(18px);
+}
+
+.immersive-earth-locations button {
+  display: inline-flex;
+  min-width: max-content;
+  min-height: 38px;
+  padding: 8px 12px;
+  align-items: center;
+  gap: 8px;
+  color: #bdc1c6;
+  font: inherit;
+  font-size: .68rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.immersive-earth-locations button:hover { color: #fff; background: rgb(255 255 255 / 7%); }
+.immersive-earth-locations button.active { color: #fff; background: rgb(66 133 244 / 20%); border-color: rgb(138 180 248 / 55%); }
+.immersive-earth-locations button:focus-visible { outline: 3px solid #fdd663; outline-offset: 2px; }
+.immersive-earth-locations button span { width: 8px; height: 8px; flex: 0 0 auto; border-radius: 50%; box-shadow: 0 0 0 3px rgb(255 255 255 / 8%); }
+
+.immersive-earth-footer {
+  position: absolute;
+  z-index: 4;
+  display: flex;
+  right: 34px;
+  bottom: 26px;
+  left: 34px;
+  justify-content: space-between;
+  gap: 18px;
+  color: #9aa0a6;
+  font-size: .65rem;
+}
+
+.immersive-earth-footer a { color: #a8c7fa; text-decoration: none; }
+.immersive-earth-footer a:hover { color: #fff; }
+.immersive-earth-boundary { max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (max-width: 840px) {
+  .immersive-earth { height: calc(100svh - 62px); min-height: 680px; scroll-margin-top: 62px; }
+  .immersive-earth-stage { inset: 24% -28% 10% -8%; }
+  .immersive-earth-fallback { inset: 20% -28% 12% -8%; }
+  .fallback-earth-orb { width: min(128vw, 760px); }
+  .immersive-earth-shade {
+    background:
+      linear-gradient(180deg, rgb(3 5 12 / 92%) 0%, transparent 38%, transparent 58%, rgb(3 5 12 / 94%) 89%),
+      radial-gradient(circle at 50% 50%, transparent 45%, rgb(3 5 12 / 26%) 100%);
+  }
+  .immersive-earth-copy { width: auto; top: 34px; right: 24px; left: 24px; }
+  .immersive-earth-copy h2 { max-width: 10ch; font-size: clamp(3rem, 12.8vw, 5rem); }
+  .immersive-earth-copy > p:last-child { max-width: 38ch; margin-top: 17px; font-size: .83rem; }
+  .immersive-earth-kicker { margin-bottom: 15px; }
+  .immersive-earth-status { display: none; }
+  .immersive-earth-notice { top: auto; right: 22px; bottom: 218px; left: 22px; }
+  .immersive-earth-inspector {
+    width: auto;
+    right: 22px;
+    bottom: 128px;
+    left: 22px;
+    padding: 13px 14px;
+    grid-template-columns: 4px minmax(0, 1fr);
+  }
+  .immersive-earth-inspector p { display: none; }
+  .immersive-earth-inspector > strong { grid-column: 2; max-width: none; text-align: left; }
+  .immersive-earth-locations { right: 12px; bottom: 55px; left: 12px; }
+  .immersive-earth-footer { right: 22px; bottom: 21px; left: 22px; }
+  .immersive-earth-footer span:nth-child(2),
+  .immersive-earth-footer a { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .immersive-earth *,
+  .immersive-earth *::before,
+  .immersive-earth *::after { scroll-behavior: auto !important; animation: none !important; transition-duration: .01ms !important; }
+}
+
+@media (forced-colors: active) {
+  .immersive-earth { background: Canvas; border-color: CanvasText; }
+  .immersive-earth-stage { display: none; }
+  .immersive-earth-fallback { opacity: 1; }
+  .immersive-earth-copy,
+  .immersive-earth-inspector,
+  .immersive-earth-footer,
+  .immersive-earth-locations { color: CanvasText; }
+}
