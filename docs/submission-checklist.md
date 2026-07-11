@@ -24,15 +24,16 @@ checks remain intentionally open until the separate deployment handoff.
 ## DigitalOcean handoff (owned separately)
 
 - [ ] Rotate every model, agent, or control-plane credential pasted into a log.
-- [ ] Validate the App Platform specification with an authenticated account.
-- [ ] Set runtime secrets in App Platform, never in Git.
+- [x] Validate the App Platform specification with an authenticated account.
+- [x] Set runtime secret entries in App Platform, never in Git.
 - [ ] Verify the agent model, system prompt, and Sensitive-Data guardrail.
 - [ ] Create/select the Knowledge Base, index sources, and attach it to the agent.
 - [ ] Confirm retrieval contains source records for the prepared demo prompt.
 - [ ] Confirm the live application renders retrieved citations.
 - [ ] Confirm serverless fallback behavior if the agent path is intentionally used.
-- [ ] Run live `/health`, valid-upload, invalid-upload, and refresh checks.
-- [ ] Record the final `.ondigitalocean.app` URL and deployment revision.
+- [x] Run live homepage, `/health`, and no-file invalid-upload checks.
+- [ ] Run a valid-upload check with an approved open-consent PGP demo file.
+- [x] Record the live URL and deployment revision: `jellyfish-app-jbnoq.ondigitalocean.app`, commit `2de758b`.
 
 ## Pitch and submission
 

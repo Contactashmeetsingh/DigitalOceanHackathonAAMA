@@ -8,8 +8,35 @@ ancestry tool; we are an audit layer for ancestry tools.
 
 Built for **AI for Social Good — Hack with MLH & DigitalOcean** (SF, Jul 10–11 2026)
 and designed for deployment on the **DigitalOcean Gradient AI Platform**. The
-local guided-report product is complete; live DigitalOcean provisioning is a
-separately owned handoff and is not claimed as verified below.
+local guided-report product is complete and the App Platform frontend is live at
+**[jellyfish-app-jbnoq.ondigitalocean.app](https://jellyfish-app-jbnoq.ondigitalocean.app)**.
+The separately owned Gradient AI agent, Knowledge Base, guardrail, and
+retrieval-citation checks are still not claimed as verified below.
+
+## Active collaboration protocol
+
+This file is the shared source of truth for every agent working in this
+repository.
+
+- **Read first:** Before responding to or changing anything for a new user
+  request, read this `README.md` to understand the latest shared state.
+- **Write back:** After every change, check, test, design decision, or blocker,
+  add a concise dated entry to the iteration log and update any affected
+  checklist/status item. Do not leave completed work only in chat.
+- **Frontend owner (Codex):** Owns `frontend/` UX, visual design, accessibility,
+  responsive behavior, frontend tests, and frontend-facing documentation.
+- **Backend/DigitalOcean owner (separate coding agent):** Owns API behavior,
+  parsing/report logic, Gradient AI, Knowledge Base, credentials, App Platform,
+  and live deployment.
+- **Respect boundaries:** Read the latest status before editing shared contracts;
+  preserve the other owner's changes and record cross-team dependencies rather
+  than silently overwriting them.
+
+### Checked this coordination turn
+
+- [x] README reviewed before work.
+- [x] Frontend and backend/DigitalOcean ownership documented.
+- [x] Ongoing README update/checklist rule recorded for both agents.
 
 ## Iteration log
 
@@ -169,13 +196,26 @@ separately owned handoff and is not claimed as verified below.
   so hostile rows fail safely, rejected contradictory vendor signatures, exposed
   retained-marker conflict scope in the API, and froze file replacement while an
   analysis is in flight. Added regression coverage and reran the full local gate:
-  `69` Python tests, `4` Node tests, and the production frontend build pass.
+  `78` Python tests, `4` Node tests, and the production frontend build pass.
 - **2026-07-11 — Evidence-console UI direction (completed):** Reworked the
   frontend hierarchy around provenance, restraint, and legibility: a safeguard
   rail, clearer report preview, an optional (never preselected) chart highlight,
   and a screen-reader-friendly data table. Added a safe 2D/3D evidence-atlas
   implementation brief: future visuals may show cited aggregate evidence only;
   they must never locate or classify a person from their DNA.
+- **2026-07-11 — Shared-agent coordination rule (completed):** Designated Codex
+  as the frontend owner and the separate coding agent as backend/DigitalOcean
+  owner. Both owners must read this README before each new request and record
+  every change, verification result, completion, and blocker here so the shared
+  repository state stays visible.
+- **2026-07-11 — Official App Platform frontend launch (completed):** Verified
+  the active `ancestry-audit-layer` App Platform deployment for commit
+  `2de758b26b203b67da134206e583507ad7fd96be` at
+  [https://jellyfish-app-jbnoq.ondigitalocean.app](https://jellyfish-app-jbnoq.ondigitalocean.app).
+  The live homepage returned HTTP 200 and the current Vite bundle; `/health`
+  returned `200 {"status":"ok"}`; and an empty `/api/analyze` request returned
+  the expected no-store `400 missing_file` JSON response. No genome file or
+  other sensitive personal data was sent during this smoke test.
 
 ## Hard boundaries (by design, not just policy)
 - No ancestry inference — interpretation only.
@@ -237,27 +277,31 @@ npm run build                  # -> frontend/dist, served by Flask at /
   Pakistani subset, unassigned count, methodology caveat, and integrity tests.
 - Dated research bridge with participation, status, consent/privacy context, and
   official sources.
-- Real open-consent PGP v3/v4/v5 API validation, 69 Python tests, four Node
+- Real open-consent PGP v3/v4/v5 API validation, 78 Python tests, four Node
   data/interaction tests, a successful production build, and local visual QA.
 
-### DigitalOcean handoff — owned separately
+### DigitalOcean deployment and AI handoff
 
-Nothing in this section is claimed complete until the deployment owner verifies
-it against the active account. The prepared local artifacts are `.do/app.yaml`,
-`Dockerfile`, `.env.example`, `agent/system_prompt.md`, `data/kb_sources/`,
-`scripts/create_kb.sh`, `evals/agent_behavior.jsonl`, and `scripts/run_evals.sh`.
+The App Platform frontend is live at
+[jellyfish-app-jbnoq.ondigitalocean.app](https://jellyfish-app-jbnoq.ondigitalocean.app)
+from active deployment `bf2c8b1b-e958-4732-8dbf-9b8117bc2d23` (commit `2de758b`).
+The prepared local artifacts for remaining AI work are `.env.example`,
+`agent/system_prompt.md`, `data/kb_sources/`, `scripts/create_kb.sh`,
+`evals/agent_behavior.jsonl`, and `scripts/run_evals.sh`.
 
 - [ ] Rotate every model, agent, or control-plane credential pasted into any log.
-- [ ] Validate the App Platform spec and set runtime secrets in App Platform.
-- [ ] Deploy the current repository revision and record the live URL/revision.
+- [x] Validate the App Platform spec and configure its runtime secret entries.
+- [x] Deploy the current repository revision and record the live URL/revision.
 - [ ] Create or select the agent; verify its model, prompt, and guardrail settings.
 - [ ] Create/select the Knowledge Base, index the prepared sources, attach it,
       and verify retrieval on the demo prompts.
 - [ ] Finish and test the optional `backend/gradient_client.py` agent response
       and retrieval-citation mapping before advertising model-generated answers.
-- [ ] Run live health, valid/invalid upload, refresh, citation, refusal, and
-      fallback smoke checks. Start a billable evaluation only with explicit
-      approval and manually review its judge rationales.
+- [x] Run live homepage, `/health`, and no-file invalid-upload smoke checks.
+- [ ] Run a live valid-upload test with an approved open-consent PGP file, then
+      test citations, default-deny refusal, and fallback behavior. Start a
+      billable evaluation only with explicit approval and manually review its
+      judge rationales.
 
 The deterministic guided report remains the safe demo path if the live agent is
 not verified. It does not require any DigitalOcean credential.
@@ -274,8 +318,8 @@ not verified. It does not require any DigitalOcean credential.
 - [`docs/ui-visualization-roadmap.md`](docs/ui-visualization-roadmap.md) — safe
   2D/3D evidence-atlas specification and copy-ready implementation prompt.
 
-The recording, live URL, final screenshots, team credits, and bracketed
-DigitalOcean claims must be filled only after the separate deployment handoff.
+The live URL is verified above. Final screenshots, recording, team credits, and
+any bracketed Gradient AI claims must be filled only after their separate checks.
 
 ### Verification commands
 
@@ -298,5 +342,6 @@ git diff --check
 - [x] Evidence-audited trait layer, population context, chart, and studies.
 - [x] Responsive accessible frontend and local production-path visual QA.
 - [x] Automated Python/frontend checks and submission-document scaffolds.
-- [ ] Live DigitalOcean agent, Knowledge Base, guardrails, and App Platform proof.
-- [ ] Final live screenshots, URLs, demo recording, and Devpost submission.
+- [x] Live DigitalOcean App Platform frontend, homepage, health, and invalid-upload proof.
+- [ ] Live DigitalOcean AI agent, Knowledge Base, guardrails, retrieval citations, and valid-upload proof.
+- [ ] Final live screenshots, demo recording, and Devpost submission.
