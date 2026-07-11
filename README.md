@@ -11,6 +11,15 @@ on the **DigitalOcean Gradient AI Platform**.
 
 ## Iteration log
 
+- **2026-07-11 — Repository publish (started):** Inspect local/remote divergence,
+  preserve unrelated working-tree changes, integrate the existing remote commit
+  safely, and push the completed feature commits to `origin/main`.
+- **2026-07-11 — Repository publish (completed):** Rebased six feature commits
+  onto the existing remote credential-wiring fix, verified that the committed
+  tree contains no tracked `.env`, DigitalOcean token pattern, literal credential
+  assignment, or credential-shaped App Platform key, and pushed to `origin/main`
+  without force. Restored every pre-existing local edit and untracked file with
+  matching checksums; none were staged or committed.
 - **2026-07-11 — Agent evaluation harness (started):** Verify the current
   DigitalOcean model-evaluation API, add a small prompt/expected-behavior dataset
   covering citations, medical refusal, ancestry precision limits, and
