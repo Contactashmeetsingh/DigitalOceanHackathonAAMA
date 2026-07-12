@@ -119,3 +119,25 @@ def test_extract_citations_handles_nested_retrieval_and_inline_urls():
         {"url": "https://example.org/reference", "label": "Population reference paper"},
         {"url": "https://example.org/second", "label": "Source cited in the agent answer"},
     ]
+
+
+def test_extract_citations_accepts_url_item_name_but_rejects_plain_filename():
+    payload = {
+        "retrieval": {
+            "retrieved_data": [
+                {
+                    "filename": "population_genetics_evidence.md",
+                    "metadata": {
+                        "item_name": "https://example.org/population-genetics-evidence",
+                    },
+                }
+            ]
+        }
+    }
+
+    assert gradient_client._extract_citations(payload) == [
+        {
+            "url": "https://example.org/population-genetics-evidence",
+            "label": "https://example.org/population-genetics-evidence",
+        }
+    ]

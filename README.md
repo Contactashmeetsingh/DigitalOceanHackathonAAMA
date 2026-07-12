@@ -10,9 +10,10 @@ Built for **AI for Social Good — Hack with MLH & DigitalOcean** (SF, Jul 10–
 and designed for deployment on the **DigitalOcean Gradient AI Platform**. The
 local guided-report product is complete and the App Platform frontend is live at
 **[jellyfish-app-jbnoq.ondigitalocean.app](https://jellyfish-app-jbnoq.ondigitalocean.app)**.
-The Gradient AI agent and managed Knowledge Base are provisioned and attached;
-the remaining retrieval-citation checks are listed explicitly below and are not
-claimed as complete until the final targeted index succeeds.
+The Gradient AI agent and managed Knowledge Base are provisioned, attached, and
+successfully indexed. A direct production agent check returned grounded
+retrieval evidence; the remaining six-category citation sweep is listed below
+and is not claimed as complete until every category passes.
 
 ## Active collaboration protocol
 
@@ -52,27 +53,48 @@ repository.
 
 ## Remaining release steps
 
-The application implementation is complete. These are the only open production
-and submission checks after the Google-color release:
+The application implementation is complete. Completed production checks and the
+only remaining post-hackathon release work are recorded here:
 
-1. Run `scripts/create_kb.sh --index` after the crawler-safe evidence dossier is
-   visible on `main`, then use `--status` until the targeted dossier and
-   ScienceDirect job finishes successfully. Older NCBI/Europe PMC crawler entries
-   may remain as documented failed inputs; do not count them as indexed evidence.
-2. Ask all six vetted research questions against the deployed agent and confirm
+1. **Complete:** the targeted Knowledge Base indexing job
+   `6a5794fc-7dbb-11f1-aee4-4e013e2ddde4` finished `SUCCEEDED`; both attached
+   sources report `DATA_SOURCE_STATUS_UPDATED`, one indexed item each, and no
+   failed items.
+2. **Open:** ask all six vetted research questions against the deployed agent and confirm
    `answer_mode=agent_rag`, retrieval URLs, and visible Pillar 3 citations. Keep
    the amber ungrounded warning if any category returns no retrieval citation.
-3. Repeat the live approved-PGP upload after App Platform activates this release;
-   require `genetic_closeness.status=available`, 26 population rows, the
-   deterministic report, and the default-deny boundaries.
-4. Record the final App Platform deployment ID/commit, capture final desktop and
-   mobile screenshots, and complete the Devpost video/team-credit fields.
+   Run `python scripts/verify_live_rag.py`; this check is currently waiting on
+   external-execution approval after the session usage limit rejected the run.
+3. **Complete:** the approved open-consent PGP v5 fixture passed against App
+   Platform deployment `e3f80bc1-8f1f-4407-8134-6162904ad9a6` (commit
+   `361d65b`) with `genetic_closeness.status=available`, 26 population rows,
+   2,279 usable markers, deterministic reporting, and default-deny boundaries.
+4. **Open:** capture/retain the final desktop and mobile submission screenshots,
+   complete the Devpost video/team-credit fields, and remove the redundant
+   tracked `globe.gl/` reference clone after destructive-operation approval.
 
 DigitalOcean currently grants presigned PDF uploads but rejects the documented
 file-data-source object with HTTP 400. The staged PDFs are not claimed as
 ingested; the source-linked crawler-safe dossier is the supported retrieval path.
 
 ## Iteration log
+
+- **2026-07-11 — Post-hackathon production audit (local work complete; two
+  external checks open):** Pulled nine upstream commits through `88ac611` and
+  verified the merged Google-color, single-frontend, immersive-Earth release.
+  The managed Knowledge Base indexing job
+  `6a5794fc-7dbb-11f1-aee4-4e013e2ddde4` completed successfully with 2/2
+  attached sources updated, one indexed item per source, and zero reported
+  failures. `scripts/verify_do.py` passed serverless inference, control-plane
+  visibility, credential separation, and a grounded production agent response
+  containing retrieval evidence. Added `scripts/verify_live_rag.py` for a
+  privacy-safe, six-category production sweep and hardened citation extraction
+  for DigitalOcean retrieval metadata whose `item_name` or `filename` contains
+  an HTTP(S) source URL; plain filenames remain rejected. All 107 Python tests,
+  all 30 frontend tests, the Vite production build, and `git diff --check` pass.
+  The six-category live sweep and deletion of the unused tracked `globe.gl/`
+  source clone remain open because the execution-approval usage limit rejected
+  those external/destructive actions; neither result is claimed prematurely.
 
 - **2026-07-11 — Immersive Earth → Docker reference dataset (completed and
   live):**
@@ -952,7 +974,7 @@ npm run build                  # -> aman_frontend/dist; Docker copies it to /app
   Pakistani subset, unassigned count, methodology caveat, and integrity tests.
 - Dated research bridge with participation, status, consent/privacy context, and
   official sources.
-- Real open-consent PGP v3/v4/v5 API validation, 104 Python tests, 30 Node
+- Real open-consent PGP v3/v4/v5 API validation, 107 Python tests, 30 Node
   data/interaction tests, a successful production build, and local visual QA.
 - [x] `/api/comparison-cohort` (synthetic, cited cohort graph) and
       `/api/population-map` (real, cited reference populations) backend
@@ -963,10 +985,10 @@ npm run build                  # -> aman_frontend/dist; Docker copies it to /app
 
 The App Platform frontend is live at
 [jellyfish-app-jbnoq.ondigitalocean.app](https://jellyfish-app-jbnoq.ondigitalocean.app)
-from verified deployment `048054f5-068d-44cb-853e-4a6310a18ba7`
-(commit `3175db3`, ACTIVE) with deploy-on-push from `origin/main`. The immersive
-Earth release passed live health, validation-error, static-geometry, and lazy
-Globe.gl-chunk checks; no genome was uploaded and no model request was sent.
+from verified deployment `e3f80bc1-8f1f-4407-8134-6162904ad9a6`
+(commit `361d65b`, ACTIVE) with deploy-on-push from `origin/main`. The immersive
+Earth release passed live health, validation-error, static-geometry, lazy
+Globe.gl-chunk, and approved open-consent PGP v5 checks.
 The prepared local artifacts for remaining AI work are `.env.example`,
 `agent/system_prompt.md`, `data/kb_sources/`, `scripts/create_kb.sh`,
 `evals/agent_behavior.jsonl`, and `scripts/run_evals.sh`.
@@ -974,16 +996,18 @@ The prepared local artifacts for remaining AI work are `.env.example`,
 - [ ] Rotate every model, agent, or control-plane credential pasted into any log.
 - [x] Validate the App Platform spec and configure its runtime secret entries.
 - [x] Deploy the current repository revision and record the live URL/revision.
-- [ ] Create or select the agent; verify its model, prompt, and guardrail settings.
+- [x] Create/select the agent and verify its model, prompt, and guardrail settings.
 - [x] Create the managed `genetics-literacy-kb` and attach it to the deployed
       Gradient agent.
-- [ ] Finish the targeted evidence-dossier index and verify retrieval on all six
-      demo prompts.
+- [x] Finish the targeted evidence-dossier index; the final job succeeded with
+      2/2 attached sources indexed and no reported source failures.
+- [ ] Verify retrieval citations on all six demo prompts with
+      `python scripts/verify_live_rag.py`.
 - [x] Finish and test the optional `backend/gradient_client.py` agent response
       and retrieval-citation mapping before advertising model-generated answers.
       Agent-path 400 (system/developer messages rejected) root-caused, fixed,
-      tested, and deployed live 2026-07-11; see Iteration log. Real retrieval
-      citations still depend on the final targeted Knowledge Base index.
+      tested, and deployed live 2026-07-11; see Iteration log. The index and a
+      direct grounded response now pass; the six-category sweep remains open.
 - [x] Run live homepage, `/health`, and no-file invalid-upload smoke checks.
 - [x] Run a live valid-upload test with an approved open-consent PGP file, then
       test citations, default-deny refusal, and fallback behavior. Start a
@@ -1040,6 +1064,7 @@ any bracketed Gradient AI claims must be filled only after their separate checks
 ```bash
 python -m pip check
 python -m pytest -q
+python scripts/verify_live_rag.py     # live model calls; run deliberately
 npm --prefix aman_frontend test
 npm --prefix aman_frontend run build
 bash -n scripts/create_kb.sh scripts/run_evals.sh scripts/smoke_frontend_api.sh
@@ -1059,6 +1084,8 @@ git diff --check
 - [x] Live DigitalOcean App Platform frontend, homepage, health, and invalid-upload proof.
 - [x] Backend cohort-comparison and population-map endpoints, plus connection
       spec, for Codex's four-surface frontend redesign.
-- [ ] Live DigitalOcean AI agent, Knowledge Base, guardrails, retrieval citations, and valid-upload proof.
-- [ ] Codex's four-surface frontend redesign implemented and visually verified.
+- [ ] Live DigitalOcean AI agent, Knowledge Base, guardrails, retrieval citations,
+      and valid-upload proof (all complete except the six-category citation sweep).
+- [ ] Codex's four-surface frontend redesign is implemented and responsive/theme
+      verified; final live WebGL QA of the comparison canvas remains open.
 - [ ] Final live screenshots, demo recording, and Devpost submission.

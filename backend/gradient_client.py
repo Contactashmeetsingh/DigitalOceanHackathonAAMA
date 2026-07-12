@@ -154,7 +154,15 @@ def _extract_citations(data: dict, content: str = "") -> list[dict[str, str]]:
                 or value.get("name")
                 or value.get("document_name")
             )
-            for key in ("source_url", "url", "link", "document_url", "uri"):
+            for key in (
+                "source_url",
+                "url",
+                "link",
+                "document_url",
+                "uri",
+                "item_name",
+                "filename",
+            ):
                 add(value.get(key), label)
             for child in value.values():
                 walk(child)
