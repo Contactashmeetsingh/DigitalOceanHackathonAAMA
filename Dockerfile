@@ -22,4 +22,4 @@ EXPOSE 8080
 
 # Keep one memory-sharing worker on the 512 MB instance, but allow a health/API
 # request to run while a slow Gradient request is in flight.
-CMD ["gunicorn", "--worker-class", "gthread", "--threads", "2", "--timeout", "120", "--bind", "0.0.0.0:8080", "backend.app:app"]
+CMD ["gunicorn", "--worker-class", "gthread", "--threads", "2", "--timeout", "190", "--bind", "0.0.0.0:8080", "backend.app:app"]

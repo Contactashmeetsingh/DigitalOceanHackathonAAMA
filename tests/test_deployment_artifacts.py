@@ -16,4 +16,4 @@ def test_gunicorn_keeps_health_responsive_during_slow_narrative_requests():
     dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
     assert '"--worker-class", "gthread"' in dockerfile
     assert '"--threads", "2"' in dockerfile
-    assert '"--timeout", "120"' in dockerfile
+    assert '"--timeout", "190"' in dockerfile

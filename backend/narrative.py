@@ -85,6 +85,8 @@ def build_messages(category: str, report: dict[str, Any]) -> list[dict[str, str]
     user_content = (
         f"Question category: {category}\n"
         f"Question: {question}\n\n"
+        "Answer concisely in at most 300 words, preserve the stated safety "
+        "boundaries, and ground outside claims in retrieved sources.\n\n"
         "Report context (JSON, already boundary-checked):\n"
         f"{json.dumps(context, default=str)}"
     )

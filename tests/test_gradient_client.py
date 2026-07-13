@@ -92,6 +92,7 @@ def test_via_agent_strips_system_and_developer_messages_before_posting(monkeypat
 
     assert captured["url"] == "https://example.agents.do-ai.run/api/v1/chat/completions?agent=true"
     assert captured["json"]["messages"] == [{"role": "user", "content": "What does my result mean?"}]
+    assert captured["json"]["max_tokens"] == 600
     assert result["content"] == "Grounded agent answer."
     assert result["answer_mode"] == "agent_rag"
 

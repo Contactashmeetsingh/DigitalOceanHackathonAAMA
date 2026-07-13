@@ -27,7 +27,9 @@ MODEL_ACCESS_KEY = os.environ.get("DIGITAL_OCEAN_MODEL_ACCESS_KEY", "")
 INFERENCE_BASE_URL = "https://inference.do-ai.run/v1/"
 FALLBACK_MODEL = "anthropic-claude-4.6-sonnet"
 
-REQUEST_TIMEOUT_S = 90  # agent/inference calls are slow; gunicorn is set to 120
+AGENT_REQUEST_TIMEOUT_S = 120
+SERVERLESS_REQUEST_TIMEOUT_S = 50
+AGENT_MAX_TOKENS = 600
 
 
 class NarrativeUnavailable(RuntimeError):
@@ -75,8 +77,9 @@ def _via_agent(messages: list[dict]) -> dict:
                 "messages": agent_messages,
                 "stream": False,
                 "include_retrieval_info": True,
+                "max_tokens": AGENT_MAX_TOKENS,
             },
-            timeout=(15, REQUEST_TIMEOUT_S),
+            timeout=(15, AGENT_REQUEST_TIMEOUT_S),
         )
         if not resp.ok:
             # Body included (truncated) for diagnosis; the agent endpoint and
@@ -107,7 +110,7 @@ def _via_serverless(messages: list[dict]) -> dict:
     client = OpenAI(
         base_url=INFERENCE_BASE_URL,
         api_key=MODEL_ACCESS_KEY,
-        http_client=DefaultHttpxClient(timeout=REQUEST_TIMEOUT_S),
+        http_client=DefaultHttpxClient(timeout=SERVERLESS_REQUEST_TIMEOUT_S),
     )
     try:
         completion = client.chat.completions.create(model=FALLBACK_MODEL, messages=messages)

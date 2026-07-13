@@ -78,10 +78,10 @@ def summarize_response(category: str, response: requests.Response) -> dict[str, 
     }
 
 
-def verify(base_url: str, timeout: int) -> list[dict[str, Any]]:
+def verify(base_url: str, timeout: int, categories: list[str] | None = None) -> list[dict[str, Any]]:
     url = f"{base_url.rstrip('/')}/api/narrative"
     results = []
-    for category in CATEGORY_QUESTIONS:
+    for category in categories or list(CATEGORY_QUESTIONS):
         try:
             response = requests.post(
                 url,
@@ -111,9 +111,15 @@ def verify(base_url: str, timeout: int) -> list[dict[str, Any]]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL)
-    parser.add_argument("--timeout", type=int, default=180)
+    parser.add_argument("--timeout", type=int, default=210)
+    parser.add_argument(
+        "--category",
+        action="append",
+        choices=list(CATEGORY_QUESTIONS),
+        help="Verify only this category; repeat to select multiple categories.",
+    )
     args = parser.parse_args()
-    results = verify(args.base_url, args.timeout)
+    results = verify(args.base_url, args.timeout, args.category)
     passed = sum(bool(result["passed"]) for result in results)
     print(f"SUMMARY: {passed}/{len(results)} categories returned agent RAG with citations")
     return 0 if passed == len(results) else 1

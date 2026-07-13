@@ -60,11 +60,12 @@ only remaining post-hackathon release work are recorded here:
    `6a5794fc-7dbb-11f1-aee4-4e013e2ddde4` finished `SUCCEEDED`; both attached
    sources report `DATA_SOURCE_STATUS_UPDATED`, one indexed item each, and no
    failed items.
-2. **Open:** ask all six vetted research questions against the deployed agent and confirm
+2. **Open (3/6 passing):** ask all six vetted research questions against the deployed agent and confirm
    `answer_mode=agent_rag`, retrieval URLs, and visible Pillar 3 citations. Keep
    the amber ungrounded warning if any category returns no retrieval citation.
-   Run `python scripts/verify_live_rag.py`; this check is currently waiting on
-   external-execution approval after the session usage limit rejected the run.
+   The first complete sweep passed `reference-panels`, `history`, and `limits`;
+   `interpretation` returned 504, while `traits` and `research` used uncited
+   fallback. A bounded latency fix is awaiting deployment and targeted retries.
 3. **Complete:** the approved open-consent PGP v5 fixture passed against App
    Platform deployment `e3f80bc1-8f1f-4407-8134-6162904ad9a6` (commit
    `361d65b`) with `genetic_closeness.status=available`, 26 population rows,
@@ -80,6 +81,21 @@ ingested; the source-linked crawler-safe dossier is the supported retrieval path
 
 ## Iteration log
 
+- **2026-07-12 — Six-category RAG sweep and bounded latency fix (3/6 live;
+  fix completed locally):** Ran the privacy-safe verifier against deployed
+  commit `3408312`. `reference-panels`, `history`, and `limits` returned
+  `agent_rag` with 8, 10, and 7 citations respectively. `interpretation`
+  returned HTTP 504; `traits` and `research` returned valid but uncited
+  `serverless_fallback` answers after the agent timed out. No genome data or
+  answer/retrieval content was printed. The failure pattern exposed a 90s
+  agent timeout followed by fallback inside a 120s Gunicorn request. Capped
+  agent output at 600 tokens, requested at most 300 words, raised the RAG
+  window to 120s, bounded fallback to 50s, and set Gunicorn to 190s while its
+  second thread keeps health responsive. The verifier now supports repeatable
+  `--category` filters so only failed categories need an initial retry.
+  All 109 Python tests and `git diff --check` pass. Deployment and targeted
+  live verification remain.
+
 - **2026-07-12 — Redundant Globe.gl source clone removed (completed):**
   Confirmed no application import consumes the tracked
   `globe.gl/` source repository and that production uses the pinned
@@ -88,7 +104,7 @@ ingested; the source-linked crawler-safe dossier is the supported retrieval path
   and application implementation. All 30 frontend tests, all 108 Python tests,
   the Vite production build, and `git diff --check` pass after removal.
 
-- **2026-07-12 — Health-check concurrency fix (completed locally):** Confirmed
+- **2026-07-12 — Health-check concurrency fix (completed and live):** Confirmed
   deployment `61836d55-e602-45bf-895a-a448223f4c03` is ACTIVE from commit
   `0493cc2`. The first production smoke hit `no_healthy_upstream` while the
   only synchronous Gunicorn worker was occupied; the same smoke passed after
@@ -96,10 +112,9 @@ ingested; the source-linked crawler-safe dossier is the supported retrieval path
   reference data within the 512 MB instance, but switched it to `gthread` with
   two threads so `/health` and deterministic API requests can run alongside a
   slow Gradient call. Added a deployment-artifact regression test. Deployment
-  deployment completed as `2173c19d-d893-4dbc-95e4-1039c1d289af` from commit
-  `3408312`, and the standard live health/API smoke passed. An overlapping
-  long-model-request check remains before concurrent behavior is marked fully
-  production-verified.
+  `2173c19d-d893-4dbc-95e4-1039c1d289af` activated commit `3408312`; the
+  standard live smoke passed, then passed again while the six-category
+  verifier held the other thread in a long Gradient request.
 
 - **2026-07-11 — Post-hackathon production audit (local work complete; two
   external checks open):** Pulled nine upstream commits through `88ac611` and
@@ -928,8 +943,8 @@ persists them" literally true rather than aspirational.
   `vite build` of `aman_frontend/` → `dist/`; stage 2 (`python:3.11-slim`)
   installs backend deps, copies `backend/`, the reference-panel data,
   `studies.json`, and stage 1's `dist/` output, then runs
-  one memory-sharing Gunicorn `gthread` worker with two threads and a 120s
-  timeout (headroom over `gradient_client`'s 90s request timeout). This keeps
+  one memory-sharing Gunicorn `gthread` worker with two threads and a 190s
+  timeout (headroom over the 120s RAG plus bounded 50s fallback windows). This keeps
   `/health` responsive while one thread waits on Gradient without duplicating
   the in-memory reference panel across processes.
 - **App Platform spec** (`.do/app.yaml`): a single `web` service built
@@ -998,7 +1013,7 @@ npm run build                  # -> aman_frontend/dist; Docker copies it to /app
   Pakistani subset, unassigned count, methodology caveat, and integrity tests.
 - Dated research bridge with participation, status, consent/privacy context, and
   official sources.
-- Real open-consent PGP v3/v4/v5 API validation, 107 Python tests, 30 Node
+- Real open-consent PGP v3/v4/v5 API validation, 109 Python tests, 30 Node
   data/interaction tests, a successful production build, and local visual QA.
 - [x] `/api/comparison-cohort` (synthetic, cited cohort graph) and
       `/api/population-map` (real, cited reference populations) backend
