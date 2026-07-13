@@ -79,6 +79,17 @@ ingested; the source-linked crawler-safe dossier is the supported retrieval path
 
 ## Iteration log
 
+- **2026-07-12 — Health-check concurrency fix (completed locally):** Confirmed
+  deployment `61836d55-e602-45bf-895a-a448223f4c03` is ACTIVE from commit
+  `0493cc2`. The first production smoke hit `no_healthy_upstream` while the
+  only synchronous Gunicorn worker was occupied; the same smoke passed after
+  that request released the worker. Kept one process to share the 1000 Genomes
+  reference data within the 512 MB instance, but switched it to `gthread` with
+  two threads so `/health` and deterministic API requests can run alongside a
+  slow Gradient call. Added a deployment-artifact regression test. Deployment
+  and an overlapping-request production check remain before this fix is marked
+  live.
+
 - **2026-07-11 — Post-hackathon production audit (local work complete; two
   external checks open):** Pulled nine upstream commits through `88ac611` and
   verified the merged Google-color, single-frontend, immersive-Earth release.
@@ -906,8 +917,10 @@ persists them" literally true rather than aspirational.
   `vite build` of `aman_frontend/` → `dist/`; stage 2 (`python:3.11-slim`)
   installs backend deps, copies `backend/`, the reference-panel data,
   `studies.json`, and stage 1's `dist/` output, then runs
-  `gunicorn --timeout 120 --bind 0.0.0.0:8080 backend.app:app` (120s headroom
-  over `gradient_client`'s 90s request timeout).
+  one memory-sharing Gunicorn `gthread` worker with two threads and a 120s
+  timeout (headroom over `gradient_client`'s 90s request timeout). This keeps
+  `/health` responsive while one thread waits on Gradient without duplicating
+  the in-memory reference panel across processes.
 - **App Platform spec** (`.do/app.yaml`): a single `web` service built
   directly from that Dockerfile, `deploy_on_push: true` from `origin/main`
   (no separate release/staging branch — every push to `main` that builds is
