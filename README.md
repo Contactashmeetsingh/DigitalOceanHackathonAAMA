@@ -81,6 +81,19 @@ ingested; the source-linked crawler-safe dossier is the supported retrieval path
 
 ## Iteration log
 
+- **2026-07-12 — Final live WebGL visual QA (completed):** Opened the production
+  `#compare` and `#atlas` surfaces in Chrome at 1440×1000 and 390×844 with
+  software WebGL enabled. Both lazy surfaces reached
+  `data-render-state="ready"` at both sizes, each created exactly one canvas,
+  and the pages reported zero JavaScript or console errors. Visual inspection
+  confirmed distinct Google-color network clusters, readable controls and
+  inspector content, rendered Earth country geometry and reference points,
+  safety copy, responsive stacking, and no canvas clipping. A viewport recheck
+  confirmed a sticky-header artifact seen only in a stitched element capture
+  is not present in the real mobile viewport. Local QA captures are under
+  `/tmp/ancestry-live-*.png`; they are intentionally not committed as runtime
+  assets.
+
 - **2026-07-12 — Six-category RAG sweep and bounded latency fix (completed and
   live):** Ran the privacy-safe verifier against deployed
   commit `3408312`. `reference-panels`, `history`, and `limits` returned
@@ -1098,9 +1111,9 @@ any bracketed Gradient AI claims must be filled only after their separate checks
       contracted endpoint and live-verified end-to-end 2026-07-11 (this agent,
       by explicit user request — see Iteration log). 24 frontend tests and the
       production build pass.
-- [ ] Actual in-browser WebGL/3D visual QA of the live `#compare` (trait
-      network) and `#atlas` (Earth globe) canvases — no browser-automation
-      tool was available this pass; a human or Codex visual check remains.
+- [x] Actual in-browser WebGL/3D visual QA of the live `#compare` (trait
+      network) and `#atlas` (Earth globe) canvases; both reached ready with one
+      canvas and no browser errors at 1440×1000 and 390×844.
 
 ### Verification commands
 
@@ -1129,6 +1142,6 @@ git diff --check
       spec, for Codex's four-surface frontend redesign.
 - [x] Live DigitalOcean AI agent, Knowledge Base, guardrails, six-category
       retrieval citations, and valid-upload proof.
-- [ ] Codex's four-surface frontend redesign is implemented and responsive/theme
-      verified; final live WebGL QA of the comparison canvas remains open.
+- [x] Codex's four-surface frontend redesign is implemented, responsive/theme
+      verified, and live WebGL-checked for the comparison and Earth canvases.
 - [ ] Final live screenshots, demo recording, and Devpost submission.
