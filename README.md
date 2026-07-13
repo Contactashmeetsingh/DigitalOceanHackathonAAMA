@@ -60,12 +60,12 @@ only remaining post-hackathon release work are recorded here:
    `6a5794fc-7dbb-11f1-aee4-4e013e2ddde4` finished `SUCCEEDED`; both attached
    sources report `DATA_SOURCE_STATUS_UPDATED`, one indexed item each, and no
    failed items.
-2. **Open (3/6 passing):** ask all six vetted research questions against the deployed agent and confirm
-   `answer_mode=agent_rag`, retrieval URLs, and visible Pillar 3 citations. Keep
-   the amber ungrounded warning if any category returns no retrieval citation.
-   The first complete sweep passed `reference-panels`, `history`, and `limits`;
-   `interpretation` returned 504, while `traits` and `research` used uncited
-   fallback. A bounded latency fix is awaiting deployment and targeted retries.
+2. **Complete:** all six vetted research categories returned HTTP 200 with
+   `answer_mode=agent_rag` and visible retrieval citations on deployment
+   `148136ce-6638-41a9-8e1b-aaa0356bc96c` (commit `cb20753`). Citation counts
+   were: interpretation 2, reference panels 7, history 2, traits 4, research 5,
+   and limits 7. The amber ungrounded warning remains as the honest runtime
+   fallback if a future request has no retrieval citation.
 3. **Complete:** the approved open-consent PGP v5 fixture passed against App
    Platform deployment `e3f80bc1-8f1f-4407-8134-6162904ad9a6` (commit
    `361d65b`) with `genetic_closeness.status=available`, 26 population rows,
@@ -81,8 +81,8 @@ ingested; the source-linked crawler-safe dossier is the supported retrieval path
 
 ## Iteration log
 
-- **2026-07-12 — Six-category RAG sweep and bounded latency fix (3/6 live;
-  fix completed locally):** Ran the privacy-safe verifier against deployed
+- **2026-07-12 — Six-category RAG sweep and bounded latency fix (completed and
+  live):** Ran the privacy-safe verifier against deployed
   commit `3408312`. `reference-panels`, `history`, and `limits` returned
   `agent_rag` with 8, 10, and 7 citations respectively. `interpretation`
   returned HTTP 504; `traits` and `research` returned valid but uncited
@@ -93,8 +93,12 @@ ingested; the source-linked crawler-safe dossier is the supported retrieval path
   window to 120s, bounded fallback to 50s, and set Gunicorn to 190s while its
   second thread keeps health responsive. The verifier now supports repeatable
   `--category` filters so only failed categories need an initial retry.
-  All 109 Python tests and `git diff --check` pass. Deployment and targeted
-  live verification remain.
+  All 109 Python tests and `git diff --check` pass. Deployment
+  `148136ce-6638-41a9-8e1b-aaa0356bc96c` activated commit `cb20753` and passed
+  the standard production smoke. Revision-consistent targeted verification
+  then returned `agent_rag` with citations for all six categories:
+  interpretation 2, reference panels 7, history 2, traits 4, research 5, and
+  limits 7. Answers were bounded to 2,051–2,426 characters in this final run.
 
 - **2026-07-12 — Redundant Globe.gl source clone removed (completed):**
   Confirmed no application import consumes the tracked
@@ -1024,11 +1028,11 @@ npm run build                  # -> aman_frontend/dist; Docker copies it to /app
 
 The App Platform frontend is live at
 [jellyfish-app-jbnoq.ondigitalocean.app](https://jellyfish-app-jbnoq.ondigitalocean.app)
-from verified deployment `e3f80bc1-8f1f-4407-8134-6162904ad9a6`
-(commit `361d65b`, ACTIVE) with deploy-on-push from `origin/main`. The immersive
-Earth release passed live health, validation-error, static-geometry, lazy
-Globe.gl-chunk, and approved open-consent PGP v5 checks.
-The prepared local artifacts for remaining AI work are `.env.example`,
+from verified deployment `148136ce-6638-41a9-8e1b-aaa0356bc96c`
+(commit `cb20753`, ACTIVE) with deploy-on-push from `origin/main`. The release
+passed live health, validation-error, approved open-consent PGP v5, concurrent
+health-during-Gradient, and six-category cited RAG checks.
+The reproducible AI support artifacts are `.env.example`,
 `agent/system_prompt.md`, `data/kb_sources/`, `scripts/create_kb.sh`,
 `evals/agent_behavior.jsonl`, and `scripts/run_evals.sh`.
 
@@ -1040,13 +1044,13 @@ The prepared local artifacts for remaining AI work are `.env.example`,
       Gradient agent.
 - [x] Finish the targeted evidence-dossier index; the final job succeeded with
       2/2 attached sources indexed and no reported source failures.
-- [ ] Verify retrieval citations on all six demo prompts with
+- [x] Verify retrieval citations on all six demo prompts with
       `python scripts/verify_live_rag.py`.
 - [x] Finish and test the optional `backend/gradient_client.py` agent response
       and retrieval-citation mapping before advertising model-generated answers.
       Agent-path 400 (system/developer messages rejected) root-caused, fixed,
       tested, and deployed live 2026-07-11; see Iteration log. The index and a
-      direct grounded response now pass; the six-category sweep remains open.
+      direct grounded response and the full six-category sweep now pass.
 - [x] Run live homepage, `/health`, and no-file invalid-upload smoke checks.
 - [x] Run a live valid-upload test with an approved open-consent PGP file, then
       test citations, default-deny refusal, and fallback behavior. Start a
@@ -1056,8 +1060,8 @@ The prepared local artifacts for remaining AI work are `.env.example`,
       serverless-fallback citations behavior all confirmed live; see Iteration
       log. No billable evaluation was started.
 
-The deterministic guided report remains the safe demo path if the live agent is
-not verified. It does not require any DigitalOcean credential.
+The deterministic guided report remains the credential-free safe path whenever
+the live agent is unavailable.
 
 ### Submission materials
 
@@ -1123,8 +1127,8 @@ git diff --check
 - [x] Live DigitalOcean App Platform frontend, homepage, health, and invalid-upload proof.
 - [x] Backend cohort-comparison and population-map endpoints, plus connection
       spec, for Codex's four-surface frontend redesign.
-- [ ] Live DigitalOcean AI agent, Knowledge Base, guardrails, retrieval citations,
-      and valid-upload proof (all complete except the six-category citation sweep).
+- [x] Live DigitalOcean AI agent, Knowledge Base, guardrails, six-category
+      retrieval citations, and valid-upload proof.
 - [ ] Codex's four-surface frontend redesign is implemented and responsive/theme
       verified; final live WebGL QA of the comparison canvas remains open.
 - [ ] Final live screenshots, demo recording, and Devpost submission.
