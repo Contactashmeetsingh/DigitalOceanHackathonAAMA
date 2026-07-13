@@ -69,15 +69,24 @@ only remaining post-hackathon release work are recorded here:
    Platform deployment `e3f80bc1-8f1f-4407-8134-6162904ad9a6` (commit
    `361d65b`) with `genetic_closeness.status=available`, 26 population rows,
    2,279 usable markers, deterministic reporting, and default-deny boundaries.
-4. **Open:** capture/retain the final desktop and mobile submission screenshots,
-   complete the Devpost video/team-credit fields, and remove the redundant
-   tracked `globe.gl/` reference clone after destructive-operation approval.
+4. **Open:** capture/retain the final desktop and mobile submission screenshots
+   and complete the Devpost video/team-credit fields.
+5. **Complete:** removed the redundant 21 MB tracked `globe.gl/` reference clone;
+   the application continues to use the pinned `globe.gl@2.46.1` npm package.
 
 DigitalOcean currently grants presigned PDF uploads but rejects the documented
 file-data-source object with HTTP 400. The staged PDFs are not claimed as
 ingested; the source-linked crawler-safe dossier is the supported retrieval path.
 
 ## Iteration log
+
+- **2026-07-12 — Redundant Globe.gl source clone removed (completed):**
+  Confirmed no application import consumes the tracked
+  `globe.gl/` source repository and that production uses the pinned
+  `globe.gl@2.46.1` npm package. Removed all 81 redundant tracked files (21 MB)
+  while preserving the runtime dependency, local Earth geometry, attribution,
+  and application implementation. All 30 frontend tests, all 108 Python tests,
+  the Vite production build, and `git diff --check` pass after removal.
 
 - **2026-07-12 — Health-check concurrency fix (completed locally):** Confirmed
   deployment `61836d55-e602-45bf-895a-a448223f4c03` is ACTIVE from commit
@@ -87,8 +96,10 @@ ingested; the source-linked crawler-safe dossier is the supported retrieval path
   reference data within the 512 MB instance, but switched it to `gthread` with
   two threads so `/health` and deterministic API requests can run alongside a
   slow Gradient call. Added a deployment-artifact regression test. Deployment
-  and an overlapping-request production check remain before this fix is marked
-  live.
+  deployment completed as `2173c19d-d893-4dbc-95e4-1039c1d289af` from commit
+  `3408312`, and the standard live health/API smoke passed. An overlapping
+  long-model-request check remains before concurrent behavior is marked fully
+  production-verified.
 
 - **2026-07-11 — Post-hackathon production audit (local work complete; two
   external checks open):** Pulled nine upstream commits through `88ac611` and
@@ -103,9 +114,9 @@ ingested; the source-linked crawler-safe dossier is the supported retrieval path
   for DigitalOcean retrieval metadata whose `item_name` or `filename` contains
   an HTTP(S) source URL; plain filenames remain rejected. All 107 Python tests,
   all 30 frontend tests, the Vite production build, and `git diff --check` pass.
-  The six-category live sweep and deletion of the unused tracked `globe.gl/`
-  source clone remain open because the execution-approval usage limit rejected
-  those external/destructive actions; neither result is claimed prematurely.
+  At that point, the six-category live sweep and deletion of the unused tracked
+  `globe.gl/` source clone remained open because the execution-approval usage
+  limit rejected those actions; the clone was removed in the later entry above.
 
 - **2026-07-11 — Immersive Earth → Docker reference dataset (completed and
   live):**
